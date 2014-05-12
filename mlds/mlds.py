@@ -50,9 +50,10 @@ class MLDSObject:
     obs.mns and obs.ci95  --> mean and 95% confidence interval of estimates after bootstrap.         
     
     """
-    def __init__(self, filename, boot=False, keepfiles=False, standardscale=True, getlinearscale=False):
+    def __init__(self, filename, boot=False, keepfiles=False, standardscale=True, getlinearscale=False, verbose=False):
         
         self.status=0 # 0: just initialized, 1: mlds computed, 2: bootstrapped, -1: error
+        self.verbose = verbose
         
         # flags
         self.boot = boot
@@ -71,7 +72,7 @@ class MLDSObject:
     def run(self):
         
         # write R file         
-        Rfile    = "tmp.R"         # r script
+        #Rfile    = "tmp.R"         # r script
         mldsfile = "tmp.csv"       # csv file with mlds results
         #fid = open(Rfile, "w+")
         
@@ -140,7 +141,8 @@ class MLDSObject:
         #fid.close()  
                   
         # run mlds analysis on R
-        print "executing in R..."     
+        if self.verbose:
+            print "executing in R..."     
         # option 1
         #st = os.system("R --no-save < %s" % Rfile)
         # option 2
@@ -149,16 +151,17 @@ class MLDSObject:
         # option 3 
         proc = subprocess.Popen(["R", "--no-save"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         for line in seq:
-            proc.stdin.write( line )        
+            proc.stdin.write( line )
         proc.communicate()
     
         ## reading results
         if proc.returncode==0:
-            print "reading MLDS results"          
+            if self.verbose:
+                print "reading MLDS results"          
             data=[]
             with open(mldsfile, 'rb') as csvfile:
                 reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-                header = reader.next()
+                reader.next()
                 for row in reader:
                     data.append( np.asarray(row, dtype=float) )
                 csvfile.close()
