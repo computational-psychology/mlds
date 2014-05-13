@@ -11,6 +11,7 @@ import csv
 import itertools
 import random
 import subprocess
+import uuid
 
 
 class MLDSObject:
@@ -73,7 +74,8 @@ class MLDSObject:
         
         # write R file         
         #Rfile    = "tmp.R"         # r script
-        mldsfile = "tmp.csv"       # csv file with mlds results
+        #mldsfile = "tmp.csv"       # csv file with mlds results
+        mldsfile = str(uuid.uuid4()) + '.csv' # csv file with mlds results
         #fid = open(Rfile, "w+")
         
         seq1 = ["library(MLDS)\n", 
