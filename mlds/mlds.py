@@ -13,6 +13,7 @@ import random
 import subprocess
 import uuid
 
+## TODO: add sigma field, that by default is 1 in nonstandard scales, but it can get other values when not.
 
 class MLDSObject:
     """
@@ -69,14 +70,16 @@ class MLDSObject:
         
         self.mns = None
         self.ci95 = None
-    
-    def run(self):
         
-        # write R file         
-        #Rfile    = "tmp.R"         # r script
-        #mldsfile = "tmp.csv"       # csv file with mlds results
-        mldsfile = str(uuid.uuid4()) + '.csv' # csv file with mlds results
-        #fid = open(Rfile, "w+")
+        self.seq=[]  # sequence of commands in R
+        self.mldsfile=''
+        
+        
+        # initialize commands for execution in R
+        self.initcommands()
+        
+    ###################################################################################################  
+    def initcommands(self):
         
         seq1 = ["library(MLDS)\n", 
                "df <- read.table('%s', sep=" ", header=TRUE)\n" % self.filename,
@@ -117,16 +120,16 @@ class MLDSObject:
         if self.boot:
             seq2a = ["obs.bt <- boot.mlds(obs.mlds, 10000)\n"]
             
-            if self.standardscale:
-                seq2b = ["obs.bt.res <- summary(obs.bt)\n",
-                        "obs.mns <- obs.bt.res[,1]\n",
-                        "obs.95ci <- qnorm(0.975) * obs.bt.res[,2]\n"]
+            if self.standardscale:  # still to add
+                seq2b = ["samples <- obs.bt$boot.samp\n"]
             else:
                 seq2b = ["n <- nrow(obs.bt$boot.samp)\n",
-                         "obs.mns <- c(0, obs.bt$bt.mean[-n] / obs.bt$bt.mean[n])\n",
-                        "obs.sd <- c(0, obs.bt$bt.sd[-n] / obs.bt$bt.mean[n])\n",
-                        "obs.95ci <- qnorm(0.975) * obs.sd\n"]
-            seq2c = ["dd <- data.frame( row.names = obs.mlds$stimulus, pscale_obs = pscale, pscale_diff = pscale2, mns = obs.mns, ci95=obs.95ci)\n"]
+                         "samples <- apply(obs.bt$boot.samp, 2, function(x) x[-n]/x[n])\n"]
+            # manually computing mean and sd. from the bootstrap samples. R routine for unconstrained scales does not work properly        
+            seq2c = ["obs.mns <- c(0, apply(samples, 1, mean))\n",
+                     "obs.sd  <- c(0, apply(samples, 1, sd))\n",
+                     "obs.95ci <- qnorm(0.975) * obs.sd\n"
+                     "dd <- data.frame( row.names = obs.mlds$stimulus, pscale_obs = pscale, pscale_diff = pscale2, mns = obs.mns, ci95=obs.95ci)\n"]
             seq2 = seq2a + seq2b + seq2c
         
         # if not, we just save the obtained scale, with or without the linear one
@@ -137,22 +140,20 @@ class MLDSObject:
             seq2 = ["dd <- data.frame( row.names = obs.mlds$stimulus, pscale_obs = pscale)\n"]
         
         # writing file
-        seq3 = ["write.csv(dd, file=\"%s\")\n" % mldsfile]
-        seq = seq1 + seq2 + seq3
-        #fid.writelines(seq)
-        #fid.close()  
-                  
+        self.mldsfile = str(uuid.uuid4()) + '.csv' # csv file with mlds results
+        seq3 = ["write.csv(dd, file=\"%s\")\n" % self.mldsfile]
+        self.seq = seq1 + seq2 + seq3
+    
+    
+    ###################################################################################################    
+    def run(self):
+       
         # run mlds analysis on R
         if self.verbose:
             print "executing in R..."     
-        # option 1
-        #st = os.system("R --no-save < %s" % Rfile)
-        # option 2
-        #proc = subprocess.Popen("R --no-save < %s" % Rfile, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        #(out,err) = proc.communicate()
-        # option 3 
+            
         proc = subprocess.Popen(["R", "--no-save"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        for line in seq:
+        for line in self.seq:
             proc.stdin.write( line )
         proc.communicate()
     
@@ -161,7 +162,7 @@ class MLDSObject:
             if self.verbose:
                 print "reading MLDS results"          
             data=[]
-            with open(mldsfile, 'rb') as csvfile:
+            with open(self.mldsfile, 'rb') as csvfile:
                 reader = csv.reader(csvfile, delimiter=',', quotechar='"')
                 reader.next()
                 for row in reader:
@@ -187,8 +188,7 @@ class MLDSObject:
             self.status= -1
             
         if not self.keepfiles:
-            os.remove(mldsfile)
-            #os.remove(Rfile)
+            os.remove(self.mldsfile)
         
         
 ###############################################################################
@@ -200,13 +200,14 @@ def generate_quadruples(stim):
     """
     Generate quadruples for difference scaling experiment.
     
-    Usage:   quads, indx = generate_quadruples( stim )
+    Usage:   quads, indx, invord = generate_quadruples( stim )
     
     
     Input:  stim:   numpy array of stimulus values
     
     Output: quads:  list of all possible non-overlapping quadruples (stimulus values)
             indx:    (idem)   but indices values
+            invord:  0 or 1, if non-inverted or inverted order of stimulus values
     
     Ported from routine "runQuadExperiment.R" from the R package "MLDS"
     
@@ -242,13 +243,14 @@ def generate_triads(stim):
     """
     Generate triads for difference scaling experiment.
     
-    Usage:   traids, indx = generate_quadruples( stim )
+    Usage:   traids, indx, invord = generate_quadruples( stim )
     
     
     Input:  stim:   numpy array of stimulus values
     
     Output: triads:  list of all possible non-overlapping triads (stimulus values)
             indx:    (idem)   but indices values
+            invord:  0 or 1, if non-inverted or inverted order of stimulus values
 
 
     Ported from routine "runTriadExperiment.R" from the R package "MLDS"
