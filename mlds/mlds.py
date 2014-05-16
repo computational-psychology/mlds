@@ -38,20 +38,22 @@ class MLDSObject:
     Methods
     ----------
     
-    obs.do()  --> run MLDS analysis
+    obs.run()  --> run MLDS analysis
 
 
     Attributes
     ----------
     
     obs.stim  --> stimulus scale\n
-    obs.scale --> perceptual scale\n
+    obs.scale --> estimated perceptual scale\n
+    obs.sigma --> estimated noise parameter\n
     obs.lscale --> linear scale (assuming perfect differentiating)\n
     
     when boot = True, \n
-    obs.mns and obs.ci95  --> mean and 95% confidence interval of estimates after bootstrap.         
-    
+    obs.mns and obs.ci95  --> mean and 95% confidence interval for scale estimates after bootstrap.         
+    obs.sigmamns and obs.sigmaci95 -->   "                     for sigma estimate after bootstrap. 
     """
+    
     def __init__(self, filename, boot=False, keepfiles=False, standardscale=True, getlinearscale=False, verbose=False):
         
         self.status=0 # 0: just initialized, 1: mlds computed, 2: bootstrapped, -1: error
@@ -67,13 +69,16 @@ class MLDSObject:
         self.scale = None
         self.lscale = None
         self.stim = None
+        self.sigma = None
         
         self.mns = None
         self.ci95 = None
+        self.sigmamns = None
+        self.sigmaci95= None
         
         self.seq=[]  # sequence of commands in R
         self.mldsfile=''
-        
+        self.returncode=-1
         
         # initialize commands for execution in R
         self.initcommands()
@@ -93,9 +98,11 @@ class MLDSObject:
         # writing perceptual scale calculation
         if self.standardscale:
             seq1a = ["ll<- length(obs.mlds$pscale)\n",
-                     "pscale <- obs.mlds$pscale/obs.mlds$pscale[ll]\n"]           
+                     "pscale <- obs.mlds$pscale/obs.mlds$pscale[ll]\n",
+                     "sigma  <- 1/obs.mlds$pscale[ll]\n"]           
         else: 
-            seq1a = ["pscale <- obs.mlds$pscale\n"]
+            seq1a = ["pscale <- obs.mlds$pscale\n",
+                     "sigma  <- obs.mlds$sigma\n"]  
             
         seq1 = seq1 + seq1a
             
@@ -110,9 +117,11 @@ class MLDSObject:
                 
             if self.standardscale:
                 seq1c = ["ll<- length(obs.mlds2$pscale)\n",
-                         "pscale2 <- obs.mlds2$pscale/obs.mlds2$pscale[ll]\n"]
+                         "pscale2 <- obs.mlds2$pscale/obs.mlds2$pscale[ll]\n",
+                         "sigma2  <- 1/obs.mlds2$pscale[ll]\n"]
             else: 
-                seq1c = ["pscale2 <- obs.mlds2$pscale\n"]     
+                seq1c = ["pscale2 <- obs.mlds2$pscale\n",
+                         "sigma2  <- obs.mlds2$sigma\n"]     
                                 
             seq1 = seq1 + seq1b + seq1c
         
@@ -124,20 +133,20 @@ class MLDSObject:
                 seq2b = ["samples <- obs.bt$boot.samp\n"]
             else:
                 seq2b = ["n <- nrow(obs.bt$boot.samp)\n",
-                         "samples <- apply(obs.bt$boot.samp, 2, function(x) x[-n]/x[n])\n"]
+                         "samples <- apply(obs.bt$boot.samp, 2, function(x) x/x[n])\n"]
             # manually computing mean and sd. from the bootstrap samples. R routine for unconstrained scales does not work properly        
             seq2c = ["obs.mns <- c(0, apply(samples, 1, mean))\n",
                      "obs.sd  <- c(0, apply(samples, 1, sd))\n",
                      "obs.95ci <- qnorm(0.975) * obs.sd\n"
-                     "dd <- data.frame( row.names = obs.mlds$stimulus, pscale_obs = pscale, pscale_diff = pscale2, mns = obs.mns, ci95=obs.95ci)\n"]
+                     "dd <- data.frame( row.names = c( obs.mlds$stimulus, 'sigma'), pscale_obs = c( pscale, sigma), pscale_diff = c( pscale2, sigma2), mns = obs.mns, ci95=obs.95ci)\n"]
             seq2 = seq2a + seq2b + seq2c
         
         # if not, we just save the obtained scale, with or without the linear one
         elif self.getlinearscale:
-            seq2 = ["dd <- data.frame( row.names = obs.mlds$stimulus, pscale_obs = pscale, pscale_diff = pscale2)\n"]
+            seq2 = ["dd <- data.frame( row.names = c( obs.mlds$stimulus, 'sigma'), pscale_obs = c( pscale, sigma), pscale_diff = c( pscale2, sigma2))\n"]
         
         else: 
-            seq2 = ["dd <- data.frame( row.names = obs.mlds$stimulus, pscale_obs = pscale)\n"]
+            seq2 = ["dd <- data.frame( row.names = c( obs.mlds$stimulus, 'sigma'), pscale_obs = c( pscale, sigma))\n"]
         
         # writing file
         self.mldsfile = str(uuid.uuid4()) + '.csv' # csv file with mlds results
@@ -156,32 +165,43 @@ class MLDSObject:
         for line in self.seq:
             proc.stdin.write( line )
         proc.communicate()
-    
+        
+        self.returncode = proc.returncode
+        
+        self.readresults()
+   
+   
+    def readresults(self):
+        
         ## reading results
-        if proc.returncode==0:
+        if self.returncode==0:
             if self.verbose:
                 print "reading MLDS results"          
             data=[]
-            with open(self.mldsfile, 'rb') as csvfile:
-                reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-                reader.next()
-                for row in reader:
-                    data.append( np.asarray(row, dtype=float) )
-                csvfile.close()
-                arr = np.array(data).T    
+            csvfile = open(self.mldsfile, 'rb')
+            reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+            reader.next()
+            for row in reader:
+                data.append( np.asarray(row) )
+            csvfile.close()
+            
+            arr=np.asarray(data[:-1], dtype=float)
+            
+            # parsing to attributes  
+            self.stim = arr.T[0]
+            self.scale= arr.T[1]
+            self.sigma = float(data[-1][1])
+            self.status=1
+            
+            if self.getlinearscale or self.boot:
+                self.lscale = arr.T[2]
                 
-                # parsing to attributes  
-                self.stim = arr[0]
-                self.scale= arr[1]
-                self.status=1
-                
-                if self.getlinearscale or self.boot:
-                    self.lscale = arr[2]
-                    
-                    if self.boot:
-                        self.mns = arr[3]
-                        self.ci95 = arr[4]           
-                        self.status=2
+                if self.boot:
+                    self.mns = arr.T[3]
+                    self.ci95 = arr.T[4]  
+                    self.sigmamns = float(data[-1][3])
+                    self.sigmaci95= float(data[-1][4])
+                    self.status=2
                 
         else:
             print "error in execution"      
@@ -282,6 +302,64 @@ def generate_triads(stim):
     # returns the triads, and the indices
     return (triads, allTrials, topbot)
  
-      
-#EOF            
+
+
     
+if __name__ == "__main__":
+    
+    import matplotlib.pyplot as plt
+    
+    ## running a test example
+    # 'test.csv' was created simulating a power function, with exponent=2, 5 blocks and noise parameter sigma=0.1
+    
+    # Case 1: Simple scale, unconstrained 
+    obs = MLDSObject( 'test.csv', boot=False, standardscale=False) # initialize object
+    obs.run()                                                   # runs Mlds in R
+     
+    plt.figure()
+    plt.plot(obs.stim, obs.scale)
+    plt.xlabel('Stimulus')
+    plt.ylabel('Difference scale')
+    plt.title('$\sigma = %.2f$' % obs.sigma)
+    plt.show()
+    
+    
+    # Case 2: Standard scale
+    obs = MLDSObject( 'test.csv', boot=False, standardscale=True) 
+    obs.run()                                                   
+
+    plt.figure()
+    plt.plot(obs.stim, obs.scale)
+    plt.xlabel('Stimulus')
+    plt.ylabel('Difference scale')
+    plt.title('$\sigma = %.2f$' % obs.sigma)
+    plt.show()
+    
+    
+    # Case 3: Standard scale and bootstrap
+    obs = MLDSObject( 'test.csv', boot=True, standardscale=True) 
+    obs.run()                                                   
+
+    plt.figure()
+    plt.errorbar(obs.stim, obs.mns, yerr=obs.ci95)
+    plt.xlabel('Stimulus')
+    plt.ylabel('Difference scale')
+    plt.title('$\sigma = %.2f \pm %.2f$' % (obs.sigmamns, obs.sigmaci95))
+    plt.xlim(0, 1.05)
+    plt.show()
+    
+    
+    # Case 4: Unconstrained scale and bootstrap
+    obs = MLDSObject( 'test.csv', boot=True, standardscale=False) 
+    obs.run()                                                  
+
+    plt.figure()
+    plt.errorbar(obs.stim, obs.mns, yerr=obs.ci95)
+    plt.xlabel('Stimulus')
+    plt.ylabel('Difference scale')
+    plt.title('$\sigma = %.2f \pm %.2f$' % (obs.sigmamns, obs.sigmaci95))
+    plt.xlim(0, 1.05)
+    plt.show()
+    
+    
+#EOF    
