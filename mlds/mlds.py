@@ -307,6 +307,8 @@ def generate_triads(stim):
     
 if __name__ == "__main__":
     
+    import matplotlib as mpl
+    mpl.use('Agg')
     import matplotlib.pyplot as plt
     
     ## running a test example
@@ -316,50 +318,57 @@ if __name__ == "__main__":
     obs = MLDSObject( 'test.csv', boot=False, standardscale=False) # initialize object
     obs.run()                                                   # runs Mlds in R
      
-    plt.figure()
+    fig=plt.figure()
     plt.plot(obs.stim, obs.scale)
     plt.xlabel('Stimulus')
     plt.ylabel('Difference scale')
     plt.title('$\sigma = %.2f$' % obs.sigma)
-    plt.show()
+    #plt.show()
+    fig.savefig('Fig1.png')
+
     
     
     # Case 2: Standard scale
     obs = MLDSObject( 'test.csv', boot=False, standardscale=True) 
     obs.run()                                                   
 
-    plt.figure()
+    fig=plt.figure()
     plt.plot(obs.stim, obs.scale)
     plt.xlabel('Stimulus')
     plt.ylabel('Difference scale')
     plt.title('$\sigma = %.2f$' % obs.sigma)
-    plt.show()
+    #plt.show()
+    fig.savefig('Fig2.png')
+
     
     
     # Case 3: Standard scale and bootstrap
     obs = MLDSObject( 'test.csv', boot=True, standardscale=True) 
     obs.run()                                                   
 
-    plt.figure()
+    fig=plt.figure()
     plt.errorbar(obs.stim, obs.mns, yerr=obs.ci95)
     plt.xlabel('Stimulus')
     plt.ylabel('Difference scale')
     plt.title('$\sigma = %.2f \pm %.2f$' % (obs.sigmamns, obs.sigmaci95))
     plt.xlim(0, 1.05)
-    plt.show()
+    #plt.show()
+    fig.savefig('Fig3.png')
+
     
     
     # Case 4: Unconstrained scale and bootstrap
     obs = MLDSObject( 'test.csv', boot=True, standardscale=False) 
     obs.run()                                                  
 
-    plt.figure()
+    fig=plt.figure()
     plt.errorbar(obs.stim, obs.mns, yerr=obs.ci95)
     plt.xlabel('Stimulus')
     plt.ylabel('Difference scale')
     plt.title('$\sigma = %.2f \pm %.2f$' % (obs.sigmamns, obs.sigmaci95))
     plt.xlim(0, 1.05)
-    plt.show()
+    #plt.show()
+    fig.savefig('Fig4.png')
     
     
 #EOF    
