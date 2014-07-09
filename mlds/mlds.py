@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Apr  8 14:27:11 2014
+Utilities for MLDS estimation, interfacing with R.
 
-@author: G. Aguilar, Apr 2014
+@author: G. Aguilar, Nov 2013, rev. Apr 2014
 """
 
 import numpy as np
@@ -13,7 +13,6 @@ import random
 import subprocess
 import uuid
 
-## TODO: add sigma field, that by default is 1 in nonstandard scales, but it can get other values when not.
 
 class MLDSObject:
     """
@@ -170,7 +169,7 @@ class MLDSObject:
         
         self.readresults()
    
-   
+    ################################################################################################### 
     def readresults(self):
         
         ## reading results
@@ -209,7 +208,35 @@ class MLDSObject:
             
         if not self.keepfiles:
             os.remove(self.mldsfile)
+
+
         
+###############################################################################
+########################## utilities for this class  #########################   
+     
+def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1):
+    
+    import matplotlib.pyplot as plt
+
+    if s.boot:
+        if s.standardscale:
+            label = "%s, $\hat{\sigma}=%.3f \pm %.3f$" % (observer, s.sigmamns, s.sigmaci95)
+        else:
+            label = "%s" % observer
+            
+        #plt.errorbar(s.stim, s.mns, yerr=s.ci95, label=label)
+        stimoff= np.hstack((0, s.stim[1:]+ offset))
+        plt.errorbar(stimoff, s.mns, yerr= s.ci95, fmt=None, ecolor= color, elinewidth=elinewidth)
+        plt.plot(s.stim, s.mns, color= color, label=label, linewidth=linewidth)
+        
+    else:
+        if s.standardscale:
+            label = "%s, $\hat{\sigma}=%.3f$" % (observer, s.sigma)
+        else:
+            label = "%s" % observer
+        
+        plt.plot(s.stim, s.scale, color= color, label=label, linewidth=linewidth)
+
         
 ###############################################################################
 ########################## utilities for experiments #########################
@@ -303,8 +330,9 @@ def generate_triads(stim):
     return (triads, allTrials, topbot)
  
 
+###############################################################################
+############################# Testing routine ##################################
 
-    
 if __name__ == "__main__":
     
     import matplotlib as mpl
