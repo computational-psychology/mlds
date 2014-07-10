@@ -88,7 +88,7 @@ class MLDSObject:
         seq1 = ["library(MLDS)\n", 
                "df <- read.table('%s', sep=" ", header=TRUE)\n" % self.filename,
                 "stim <- sort(unique(df$s1))\n",
-                "results <- data.frame(resp = as.integer(df$Response), S1= df$i1, S2=df$i2, S3=df$i3)\n",
+                "results <- data.frame(resp = as.integer(df$Response), S1= match(df$s1, stim), S2=match(df$s2, stim), S3=match(df$s3, stim))\n",
                 "attr(results, \"stimulus\") <- stim\n",
                 "attr(results, \"invord\") <- as.logical( df$invord )\n",
                 "class(results) <- c(\"mlbs.df\", \"data.frame\")\n",
@@ -108,7 +108,7 @@ class MLDSObject:
         # getting or not linear scale
         if self.getlinearscale or self.boot:
             seq1b = ["df$Response2 <- as.integer(abs(df$s1 - df$s2) < abs(df$s2 - df$s3))\n",
-                "results2 <- data.frame(resp = as.integer(df$Response2), S1= df$i1, S2=df$i2, S3=df$i3)\n",
+                "results2 <- data.frame(resp = as.integer(df$Response2),  S1= match(df$s1, stim), S2=match(df$s2, stim), S3=match(df$s3, stim))\n",
                 "attr(results2, \"stimulus\") <- stim\n",
                 "attr(results2, \"invord\") <- as.logical( df$invord )\n",
                 "class(results2) <- c(\"mlbs.df\", \"data.frame\")\n",
