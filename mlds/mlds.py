@@ -79,6 +79,10 @@ class MLDSObject:
         self.mldsfile=''
         self.returncode=-1
         
+        # parallel execution of bootsrap
+        self.parallel=False
+        self.ncpus = 2
+        
         # initialize commands for execution in R
         self.initcommands()
         
@@ -126,7 +130,12 @@ class MLDSObject:
         
         # if we want confidence intervals, we need to bootstrap
         if self.boot:
-            seq2a = ["obs.bt <- boot.mlds(obs.mlds, 10000)\n"]
+            if self.parallel:
+                seq2a = ["library(snowfall)\n",
+                         "source('pboot.mlds.R')\n",
+                         "obs.bt <- pboot.mlds(obs.mlds, 10000, parallel=TRUE, cpus=%s)\n" % self.ncpus]
+            else:
+                seq2a = ["obs.bt <- boot.mlds(obs.mlds, 10000)\n"]
             
             if self.standardscale:  # still to add
                 seq2b = ["samples <- obs.bt$boot.samp\n"]
@@ -155,6 +164,8 @@ class MLDSObject:
     
     ###################################################################################################    
     def run(self):
+        
+        self.initcommands()
        
         # run mlds analysis on R
         if self.verbose:
@@ -338,6 +349,7 @@ if __name__ == "__main__":
     import matplotlib as mpl
     mpl.use('Agg')
     import matplotlib.pyplot as plt
+    import time
     
     ## running a test example
     # 'test.csv' was created simulating a power function, with exponent=2, 5 blocks and noise parameter sigma=0.1
@@ -371,32 +383,55 @@ if __name__ == "__main__":
     
     
     # Case 3: Standard scale and bootstrap
-    obs = MLDSObject( 'test.csv', boot=True, standardscale=True) 
-    obs.run()                                                   
+    #obs = MLDSObject( 'test.csv', boot=True, standardscale=True) 
+    #obs.parallel= True
+    #obs.ncpus = 2
+    #obs.run()    
 
-    fig=plt.figure()
-    plt.errorbar(obs.stim, obs.mns, yerr=obs.ci95)
-    plt.xlabel('Stimulus')
-    plt.ylabel('Difference scale')
-    plt.title('$\sigma = %.2f \pm %.2f$' % (obs.sigmamns, obs.sigmaci95))
-    plt.xlim(0, 1.05)
+
+    #fig=plt.figure()
+    #plt.errorbar(obs.stim, obs.mns, yerr=obs.ci95)
+    #plt.xlabel('Stimulus')
+    #plt.ylabel('Difference scale')
+    #plt.title('$\sigma = %.2f \pm %.2f$' % (obs.sigmamns, obs.sigmaci95))
+    #plt.xlim(0, 1.05)
     #plt.show()
-    fig.savefig('Fig3.png')
+    #fig.savefig('Fig3.png')
 
     
     
     # Case 4: Unconstrained scale and bootstrap
-    obs = MLDSObject( 'test.csv', boot=True, standardscale=False) 
-    obs.run()                                                  
+    #obs = MLDSObject( 'test.csv', boot=True, standardscale=False)
+    #obs.parallel= True
+    #obs.ncpus = 2
+    #obs.run()                                                  
 
-    fig=plt.figure()
-    plt.errorbar(obs.stim, obs.mns, yerr=obs.ci95)
-    plt.xlabel('Stimulus')
-    plt.ylabel('Difference scale')
-    plt.title('$\sigma = %.2f \pm %.2f$' % (obs.sigmamns, obs.sigmaci95))
-    plt.xlim(0, 1.05)
+    #fig=plt.figure()
+    #plt.errorbar(obs.stim, obs.mns, yerr=obs.ci95)
+    #plt.xlabel('Stimulus')
+    #plt.ylabel('Difference scale')
+    #plt.title('$\sigma = %.2f \pm %.2f$' % (obs.sigmamns, obs.sigmaci95))
+    #plt.xlim(0, 1.05)
     #plt.show()
-    fig.savefig('Fig4.png')
+    #fig.savefig('Fig4.png')
     
     
+    # Benchmark parallelization
+    obs = MLDSObject( 'test.csv', boot=True, standardscale=True)
+    obs.parallel= False
+    
+    startime=time.time()
+    obs.run()
+    print 'without parallel: %d ' % (time.time() - startime)
+    
+    
+    obs.parallel= True                               
+    obs.ncpus = 2
+    
+    startime=time.time()
+    obs.run()
+    print 'with parallel: %d ' % (time.time() - startime)
+    
+    
+     
 #EOF    
