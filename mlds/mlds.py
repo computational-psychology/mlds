@@ -3,6 +3,12 @@
 Utilities for MLDS estimation, interfacing with R.
 
 @author: G. Aguilar, Nov 2013, rev. Apr 2014
+
+TO ADD: save a MLDSObject to a file. Better to save it with pickle, and
+do it loading the csvfile to a data array or so. So the object can be run 
+from csvfile or from data array. This would imply, if data is non-empty, to 
+save the data on a csvfile and that is passed to R.
+
 """
 
 import numpy as np
@@ -12,6 +18,7 @@ import itertools
 import random
 import subprocess
 import uuid
+import pickle
 
 
 class MLDSObject:
@@ -132,7 +139,7 @@ class MLDSObject:
         if self.boot:
             if self.parallel:
                 seq2a = ["library(snowfall)\n",
-                         "source('pboot.mlds.R')\n",
+                         "source('~/git/slantfromtex/mlds/pboot.mlds.R')\n",
                          "obs.bt <- pboot.mlds(obs.mlds, 10000, parallel=TRUE, cpus=%s)\n" % self.ncpus]
             else:
                 seq2a = ["obs.bt <- boot.mlds(obs.mlds, 10000)\n"]
@@ -219,12 +226,28 @@ class MLDSObject:
             
         if not self.keepfiles:
             os.remove(self.mldsfile)
-
+    ####################################################################
+    def save(self, filetosave=False):
+        if not filetosave:
+            filetosave = self.filename.split('.')[0] + '.mlds'
+        
+        f = open(filetosave, 'w')
+        pickle.dump(self, f)
+        f.close()     
 
         
 ###############################################################################
 ########################## utilities for this class  #########################   
-     
+def loadMLDSObject(filename):
+    
+    f=open(filename, 'r')
+    r = pickle.load(f)
+    f.close()
+    
+    return r
+    
+    
+    
 def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1):
     
     import matplotlib.pyplot as plt
@@ -351,18 +374,27 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import time
     
+    
+    bootstrap=False
+    benchmark=False
+    
+    
+    
     ## running a test example
     # 'test.csv' was created simulating a power function, with exponent=2, 5 blocks and noise parameter sigma=0.1
     
     # Case 1: Simple scale, unconstrained 
     obs = MLDSObject( 'test.csv', boot=False, standardscale=False) # initialize object
     obs.run()                                                   # runs Mlds in R
-     
+    obs.save()
+    
+    obs2 = loadMLDSObject('test.mlds')
+    
     fig=plt.figure()
-    plt.plot(obs.stim, obs.scale)
+    plt.plot(obs2.stim, obs2.scale)
     plt.xlabel('Stimulus')
     plt.ylabel('Difference scale')
-    plt.title('$\sigma = %.2f$' % obs.sigma)
+    plt.title('$\sigma = %.2f$' % obs2.sigma)
     #plt.show()
     fig.savefig('Fig1.png')
 
@@ -381,56 +413,59 @@ if __name__ == "__main__":
     fig.savefig('Fig2.png')
 
     
-    
-    # Case 3: Standard scale and bootstrap
-    #obs = MLDSObject( 'test.csv', boot=True, standardscale=True) 
-    #obs.parallel= True
-    #obs.ncpus = 2
-    #obs.run()    
-
-
-    #fig=plt.figure()
-    #plt.errorbar(obs.stim, obs.mns, yerr=obs.ci95)
-    #plt.xlabel('Stimulus')
-    #plt.ylabel('Difference scale')
-    #plt.title('$\sigma = %.2f \pm %.2f$' % (obs.sigmamns, obs.sigmaci95))
-    #plt.xlim(0, 1.05)
-    #plt.show()
-    #fig.savefig('Fig3.png')
-
+    if bootstrap:
+        
+        # Case 3: Standard scale and bootstrap
+        obs = MLDSObject( 'test.csv', boot=True, standardscale=True) 
+        obs.parallel= True
+        obs.ncpus = 2
+        obs.run()    
     
     
-    # Case 4: Unconstrained scale and bootstrap
-    #obs = MLDSObject( 'test.csv', boot=True, standardscale=False)
-    #obs.parallel= True
-    #obs.ncpus = 2
-    #obs.run()                                                  
-
-    #fig=plt.figure()
-    #plt.errorbar(obs.stim, obs.mns, yerr=obs.ci95)
-    #plt.xlabel('Stimulus')
-    #plt.ylabel('Difference scale')
-    #plt.title('$\sigma = %.2f \pm %.2f$' % (obs.sigmamns, obs.sigmaci95))
-    #plt.xlim(0, 1.05)
-    #plt.show()
-    #fig.savefig('Fig4.png')
+        fig=plt.figure()
+        plt.errorbar(obs.stim, obs.mns, yerr=obs.ci95)
+        plt.xlabel('Stimulus')
+        plt.ylabel('Difference scale')
+        plt.title('$\sigma = %.2f \pm %.2f$' % (obs.sigmamns, obs.sigmaci95))
+        plt.xlim(0, 1.05)
+        plt.show()
+        fig.savefig('Fig3.png')
+    
+        
+        
+        # Case 4: Unconstrained scale and bootstrap
+        obs = MLDSObject( 'test.csv', boot=True, standardscale=False)
+        obs.parallel= True
+        obs.ncpus = 2
+        obs.run()                                                  
+    
+        fig=plt.figure()
+        plt.errorbar(obs.stim, obs.mns, yerr=obs.ci95)
+        plt.xlabel('Stimulus')
+        plt.ylabel('Difference scale')
+        plt.title('$\sigma = %.2f \pm %.2f$' % (obs.sigmamns, obs.sigmaci95))
+        plt.xlim(0, 1.05)
+        plt.show()
+        fig.savefig('Fig4.png')
     
     
     # Benchmark parallelization
-    obs = MLDSObject( 'test.csv', boot=True, standardscale=True)
-    obs.parallel= False
-    
-    startime=time.time()
-    obs.run()
-    print 'without parallel: %d ' % (time.time() - startime)
-    
-    
-    obs.parallel= True                               
-    obs.ncpus = 2
-    
-    startime=time.time()
-    obs.run()
-    print 'with parallel: %d ' % (time.time() - startime)
+    if benchmark:
+        
+        obs = MLDSObject( 'test.csv', boot=True, standardscale=True)
+        obs.parallel= False
+        
+        startime=time.time()
+        obs.run()
+        print 'without parallel: %d ' % (time.time() - startime)
+        
+        
+        obs.parallel= True                               
+        obs.ncpus = 2
+        
+        startime=time.time()
+        obs.run()
+        print 'with parallel: %d ' % (time.time() - startime)
     
     
      
