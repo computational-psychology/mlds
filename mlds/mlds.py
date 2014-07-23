@@ -87,8 +87,9 @@ class MLDSObject:
         self.returncode=-1
         
         # parallel execution of bootsrap
-        self.parallel=False
-        self.ncpus = 2
+        self.parallel= False
+        self.workers = ['"localhost"', '"localhost"']
+        self.master = '"localhost"'
         
         # initialize commands for execution in R
         self.initcommands()
@@ -138,9 +139,11 @@ class MLDSObject:
         # if we want confidence intervals, we need to bootstrap
         if self.boot:
             if self.parallel:
-                seq2a = ["library(snowfall)\n",
+                seq2a = ["library(snow)\n",
                          "source('~/git/slantfromtex/mlds/pboot.mlds.R')\n",
-                         "obs.bt <- pboot.mlds(obs.mlds, 10000, parallel=TRUE, cpus=%s)\n" % self.ncpus]
+                         "workers <- c(%s)\n" % ",".join(self.workers),
+                         "master <- %s\n" % self.master,
+                         "obs.bt <- pboot.mlds(obs.mlds, 10000, workers = workers, master=master )\n"]
             else:
                 seq2a = ["obs.bt <- boot.mlds(obs.mlds, 10000)\n"]
             
@@ -374,51 +377,50 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import time
     
-    
+    simplecases=False
     bootstrap=False
-    benchmark=False
+    benchmark=True
     
     
     
     ## running a test example
     # 'test.csv' was created simulating a power function, with exponent=2, 5 blocks and noise parameter sigma=0.1
     
-    # Case 1: Simple scale, unconstrained 
-    obs = MLDSObject( 'test.csv', boot=False, standardscale=False) # initialize object
-    obs.run()                                                   # runs Mlds in R
-    obs.save()
-    
-    obs2 = loadMLDSObject('test.mlds')
-    
-    fig=plt.figure()
-    plt.plot(obs2.stim, obs2.scale)
-    plt.xlabel('Stimulus')
-    plt.ylabel('Difference scale')
-    plt.title('$\sigma = %.2f$' % obs2.sigma)
-    #plt.show()
-    fig.savefig('Fig1.png')
+    if simplecases:
+        # Case 1: Simple scale, unconstrained 
+        obs = MLDSObject( 'test.csv', boot=False, standardscale=False) # initialize object
+        obs.run()                                                   # runs Mlds in R
+        obs.save()
+        
+        obs2 = loadMLDSObject('test.mlds')
+        
+        fig=plt.figure()
+        plt.plot(obs2.stim, obs2.scale)
+        plt.xlabel('Stimulus')
+        plt.ylabel('Difference scale')
+        plt.title('$\sigma = %.2f$' % obs2.sigma)
+        #plt.show()
+        fig.savefig('Fig1.png')
 
-    
-    
-    # Case 2: Standard scale
-    obs = MLDSObject( 'test.csv', boot=False, standardscale=True) 
-    obs.run()                                                   
+        
+        
+        # Case 2: Standard scale
+        obs = MLDSObject( 'test.csv', boot=False, standardscale=True) 
+        obs.run()                                                   
 
-    fig=plt.figure()
-    plt.plot(obs.stim, obs.scale)
-    plt.xlabel('Stimulus')
-    plt.ylabel('Difference scale')
-    plt.title('$\sigma = %.2f$' % obs.sigma)
-    #plt.show()
-    fig.savefig('Fig2.png')
+        fig=plt.figure()
+        plt.plot(obs.stim, obs.scale)
+        plt.xlabel('Stimulus')
+        plt.ylabel('Difference scale')
+        plt.title('$\sigma = %.2f$' % obs.sigma)
+        #plt.show()
+        fig.savefig('Fig2.png')
 
     
     if bootstrap:
         
         # Case 3: Standard scale and bootstrap
         obs = MLDSObject( 'test.csv', boot=True, standardscale=True) 
-        obs.parallel= True
-        obs.ncpus = 2
         obs.run()    
     
     
@@ -435,8 +437,6 @@ if __name__ == "__main__":
         
         # Case 4: Unconstrained scale and bootstrap
         obs = MLDSObject( 'test.csv', boot=True, standardscale=False)
-        obs.parallel= True
-        obs.ncpus = 2
         obs.run()                                                  
     
         fig=plt.figure()
@@ -453,20 +453,37 @@ if __name__ == "__main__":
     if benchmark:
         
         obs = MLDSObject( 'test.csv', boot=True, standardscale=True)
+        
         obs.parallel= False
         
         startime=time.time()
         obs.run()
-        print 'without parallel: %d ' % (time.time() - startime)
+        print 'without parallel: %d sec ' % (time.time() - startime)
         
         
-        obs.parallel= True                               
-        obs.ncpus = 2
+        # parallel but in duo core computer
+        obs.parallel= True                           
         
         startime=time.time()
         obs.run()
-        print 'with parallel: %d ' % (time.time() - startime)
-    
-    
+        print 'with parallel and 2 CPUs: %d sec ' % (time.time() - startime)
+        
+        
+        # parallel but in quad computer
+        obs.workers=['"localhost"'] *4                          
+        
+        startime=time.time()
+        obs.run()
+        print 'with parallel and 4 CPUs: %d sec' % (time.time() - startime)
+        
+        
+        # in the lab with 8 CPUS
+        obs.workers=['"localhost"', '"localhost"', '"localhost"', '"localhost"',  '"130.149.57.124"' , '"130.149.57.124"', '"130.149.57.124"', '"130.149.57.124"']
+        obs.master = '"130.149.57.105"'            
+        
+        startime=time.time()
+        obs.run()
+        print 'with parallel and 8 CPUs: %d sec' % (time.time() - startime)
+
      
 #EOF    

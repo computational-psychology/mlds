@@ -41,7 +41,7 @@ I-1
 I0
 tp17
 bI00
-S"\x00\x00\x00\x00\x00\x00\x00\x00\xe0\xd5o\xf7\xa8I\xc0?*g\xfe\x94H_\xda?\x1f;\\L\xbc\x96\xec?\xaf\xec\x08\xdc\xf9\x9e\xf1?\xda\x90\xbe|\xd2\xed\xf9?\x89I'\x18\xb4\x86\x02@\xf6Y\x16#X{\x07@x\x19\xfb\xea\x93\xc9\x0f@\x86S\tN\x93H\x12@\xc0rg\xd9y\r\x19@"
+S"\x00\x00\x00\x00\x00\x00\x00\x00\xe0\xd5o\xf7\xa8I\xc0?Ng\xfe\x94H_\xda?:;\\L\xbc\x96\xec?\xaf\xec\x08\xdc\xf9\x9e\xf1?\xda\x90\xbe|\xd2\xed\xf9?\x89I'\x18\xb4\x86\x02@\x0cZ\x16#X{\x07@\x8e\x19\xfb\xea\x93\xc9\x0f@\x9dS\tN\x93H\x12@\xcbrg\xd9y\r\x19@"
 p18
 tp19
 bsS'verbose'
@@ -56,79 +56,85 @@ I00
 sS'sigma'
 p23
 F1.0
-sS'ncpus'
+sS'workers'
 p24
-I2
-sS'mns'
-p25
-NsS'boot'
+(lp25
+S'localhost'
 p26
+ag26
+asS'mns'
+p27
+NsS'boot'
+p28
 I00
 sS'getlinearscale'
-p27
+p29
 I00
 sS'filename'
-p28
-S'test.csv'
-p29
-sS'stim'
 p30
+S'test.csv'
+p31
+sS'stim'
+p32
 g5
 (g6
 (I0
-tp31
+tp33
 g8
-tp32
-Rp33
+tp34
+Rp35
 (I1
 (I11
-tp34
+tp36
 g15
 I00
 S'\x00\x00\x00\x00\x00\x00\x00\x00\x9a\x99\x99\x99\x99\x99\xb9?\x9a\x99\x99\x99\x99\x99\xc9?333333\xd3?\x9a\x99\x99\x99\x99\x99\xd9?\x00\x00\x00\x00\x00\x00\xe0?333333\xe3?ffffff\xe6?\x9a\x99\x99\x99\x99\x99\xe9?\xcd\xcc\xcc\xcc\xcc\xcc\xec?\x00\x00\x00\x00\x00\x00\xf0?'
-p35
-tp36
-bsS'mldsfile'
 p37
-S'11ed877f-3f48-4283-ad51-7d8e50b11c86.csv'
-p38
-sS'returncode'
+tp38
+bsS'master'
 p39
+g26
+sS'mldsfile'
+p40
+S'b5c9199b-f284-40f2-8255-576d9838dd2a.csv'
+p41
+sS'returncode'
+p42
 I0
 sS'ci95'
-p40
-NsS'sigmamns'
-p41
-NsS'lscale'
-p42
-NsS'keepfiles'
 p43
+NsS'sigmamns'
+p44
+NsS'lscale'
+p45
+NsS'keepfiles'
+p46
 I00
 sS'seq'
-p44
-(lp45
-S'library(MLDS)\n'
-p46
-aS"df <- read.table('test.csv', sep=, header=TRUE)\n"
 p47
-aS'stim <- sort(unique(df$s1))\n'
-p48
-aS'results <- data.frame(resp = as.integer(df$Response), S1= match(df$s1, stim), S2=match(df$s2, stim), S3=match(df$s3, stim))\n'
+(lp48
+S'library(MLDS)\n'
 p49
-aS'attr(results, "stimulus") <- stim\n'
+aS"df <- read.table('test.csv', sep=, header=TRUE)\n"
 p50
-aS'attr(results, "invord") <- as.logical( df$invord )\n'
+aS'stim <- sort(unique(df$s1))\n'
 p51
-aS'class(results) <- c("mlbs.df", "data.frame")\n'
+aS'results <- data.frame(resp = as.integer(df$Response), S1= match(df$s1, stim), S2=match(df$s2, stim), S3=match(df$s3, stim))\n'
 p52
-aS'obs.mlds <- mlds(results)\n'
+aS'attr(results, "stimulus") <- stim\n'
 p53
-aS'pscale <- obs.mlds$pscale\n'
+aS'attr(results, "invord") <- as.logical( df$invord )\n'
 p54
-aS'sigma  <- obs.mlds$sigma\n'
+aS'class(results) <- c("mlbs.df", "data.frame")\n'
 p55
-aS"dd <- data.frame( row.names = c( obs.mlds$stimulus, 'sigma'), pscale_obs = c( pscale, sigma))\n"
+aS'obs.mlds <- mlds(results)\n'
 p56
-aS'write.csv(dd, file="11ed877f-3f48-4283-ad51-7d8e50b11c86.csv")\n'
+aS'pscale <- obs.mlds$pscale\n'
 p57
+aS'sigma  <- obs.mlds$sigma\n'
+p58
+aS"dd <- data.frame( row.names = c( obs.mlds$stimulus, 'sigma'), pscale_obs = c( pscale, sigma))\n"
+p59
+aS'write.csv(dd, file="b5c9199b-f284-40f2-8255-576d9838dd2a.csv")\n'
+p60
 asb.
