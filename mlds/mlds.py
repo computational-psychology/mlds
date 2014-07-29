@@ -71,6 +71,7 @@ class MLDSObject:
         self.standardscale = standardscale
         self.getlinearscale = getlinearscale
         
+        self.link='probit'
         self.filename = filename  # csv datafile containing observer responses
         self.scale = None
         self.lscale = None
@@ -104,7 +105,7 @@ class MLDSObject:
                 "attr(results, \"stimulus\") <- stim\n",
                 "attr(results, \"invord\") <- as.logical( df$invord )\n",
                 "class(results) <- c(\"mlbs.df\", \"data.frame\")\n",
-                 "obs.mlds <- mlds(results)\n"]
+                 "obs.mlds <- mlds(results, lnk='%s')\n" % self.link]
                  
         # writing perceptual scale calculation
         if self.standardscale:
@@ -257,7 +258,7 @@ def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1)
 
     if s.boot:
         if s.standardscale:
-            label = "%s, $\hat{\sigma}=%.3f \pm %.3f$" % (observer, s.sigmamns, s.sigmaci95)
+            label = "%s, $\hat{\sigma}=%.3f \, [%.3f, \, %.3f]$" % (observer, s.sigmamns, s.sigmamns - s.sigmaci95, s.sigmamns + s.sigmaci95)
         else:
             label = "%s" % observer
             
