@@ -8,6 +8,7 @@ pboot.mlds <- function(x, nsim, no.warn = TRUE, workers="localhost", master="loc
   
   #sfLibrary(MLDS)   # loads MLDS package on each of the workers
   clusterEvalQ(cl, library(MLDS))
+  clusterEvalQ(cl, library(psyphy))
   
   if (no.warn){
     old.opt <- options(warn = -1)

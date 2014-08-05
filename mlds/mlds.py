@@ -18,7 +18,6 @@ import itertools
 import random
 import subprocess
 import uuid
-import pickle
 
 
 class MLDSObject:
@@ -60,7 +59,7 @@ class MLDSObject:
     obs.sigmamns and obs.sigmaci95 -->   "                     for sigma estimate after bootstrap. 
     """
     
-    def __init__(self, filename, boot=False, keepfiles=False, standardscale=True, getlinearscale=False, verbose=False):
+    def __init__(self, filename, boot=False, keepfiles=False, standardscale=True, getlinearscale=False, verbose=False, save=True):
         
         self.status=0 # 0: just initialized, 1: mlds computed, 2: bootstrapped, -1: error
         self.verbose = verbose
@@ -70,18 +69,29 @@ class MLDSObject:
         self.keepfiles = keepfiles
         self.standardscale = standardscale
         self.getlinearscale = getlinearscale
+        self.saveRobj = save
         
-        self.link='probit'
+        self.link="'probit'"
         self.filename = filename  # csv datafile containing observer responses
+        self.Rdatafile = filename.split('.')[0]+'.MLDS'
+        
+        # scale and noise param, stimulus vector
         self.scale = None
         self.lscale = None
         self.stim = None
         self.sigma = None
         
+        # bootstrap 
         self.mns = None
         self.ci95 = None
         self.sigmamns = None
         self.sigmaci95= None
+        
+        # diagnostic measures
+        self.AIC = None
+        self.DAF = None
+        self.prob = None
+                
         
         self.seq=[]  # sequence of commands in R
         self.mldsfile=''
@@ -98,14 +108,15 @@ class MLDSObject:
     ###################################################################################################  
     def initcommands(self):
         
-        seq1 = ["library(MLDS)\n", 
+        seq1 = ["library(MLDS)\n",
+                "library(psyphy)\n",
                "df <- read.table('%s', sep=" ", header=TRUE)\n" % self.filename,
                 "stim <- sort(unique(df$s1))\n",
                 "results <- data.frame(resp = as.integer(df$Response), S1= match(df$s1, stim), S2=match(df$s2, stim), S3=match(df$s3, stim))\n",
                 "attr(results, \"stimulus\") <- stim\n",
                 "attr(results, \"invord\") <- as.logical( df$invord )\n",
                 "class(results) <- c(\"mlbs.df\", \"data.frame\")\n",
-                 "obs.mlds <- mlds(results, lnk='%s')\n" % self.link]
+                 "obs.mlds <- mlds(results, lnk=%s)\n" % self.link]
                  
         # writing perceptual scale calculation
         if self.standardscale:
@@ -170,7 +181,16 @@ class MLDSObject:
         # writing file
         self.mldsfile = str(uuid.uuid4()) + '.csv' # csv file with mlds results
         seq3 = ["write.csv(dd, file=\"%s\")\n" % self.mldsfile]
-        self.seq = seq1 + seq2 + seq3
+        
+        # saving R objects into datafile
+        if self.boot and self.saveRobj:
+            seq4 = ["save(results, obs.mlds, obs.bt, file='%s')\n" % self.Rdatafile]
+        elif self.saveRobj:
+            seq4 = ["save(results, obs.mlds, file='%s')\n" % self.Rdatafile]
+        else:
+            seq4 = ["\n"]
+            
+        self.seq = seq1 + seq2 + seq3 + seq4
     
     
     ###################################################################################################    
@@ -178,18 +198,28 @@ class MLDSObject:
         
         self.initcommands()
        
-        # run mlds analysis on R
+        # run MLDS analysis in R
         if self.verbose:
             print "executing in R..."     
             
         proc = subprocess.Popen(["R", "--no-save"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         for line in self.seq:
             proc.stdin.write( line )
-        proc.communicate()
+        (out, err) = proc.communicate()
         
         self.returncode = proc.returncode
+                
+        if self.verbose:
+            print out                    
         
-        self.readresults()
+        if self.returncode==0:
+            self.readresults()
+        else:
+            print err
+            raise RuntimeError("Error in execution within R (see error output above)")
+        
+        
+            
    
     ################################################################################################### 
     def readresults(self):
@@ -230,27 +260,80 @@ class MLDSObject:
             
         if not self.keepfiles:
             os.remove(self.mldsfile)
-    ####################################################################
-    def save(self, filetosave=False):
-        if not filetosave:
-            filetosave = self.filename.split('.')[0] + '.mlds'
+            
+    #################################################################### 
+    def rundiagnostics(self): 
         
-        f = open(filetosave, 'w')
-        pickle.dump(self, f)
-        f.close()     
+        seqdiag = ["library(MLDS)\n", 
+        "load('%s')\n" % self.Rdatafile, 
+        "library(snow)\n",
+        "source('~/git/slantfromtex/mlds/pbinom.diagnostics.R')\n",
+        "workers <- c(%s)\n" % ",".join(self.workers),
+        "master <- %s\n" % self.master,
+        "obs.diag.prob <- pbinom.diagnostics (obs.mlds, 10000, workers=workers, master=master)\n"
+        "save(results, obs.mlds, obs.bt, obs.diag.prob, file='%s')\n" % self.Rdatafile ]
+        
+       
+        # run MLDS analysis in R
+        if self.verbose:
+            print "executing in R..."     
+            
+        proc = subprocess.Popen(["R", "--no-save"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        for line in seqdiag:
+            proc.stdin.write( line )
+        (out, err) = proc.communicate()
+        
+        self.returncode = proc.returncode
+                
+        if self.verbose:
+            print out                    
+        
+        if self.returncode==0:
+            self.readdiags()
+        else:
+            print err
+            raise RuntimeError("Error in execution within R (see error output above)")
+            
+            
+    #####
+    def readdiags(self):
+        
+        import rpy2.robjects as robjects
+
+        ### loading file
+        robjects.r['load']("%s" % self.Rdatafile)
+        
+        # loading R objects into python variables
+        obsmlds = robjects.r['obs.mlds']
+        #obsbt   = robjects.r['obs.bt']
+        diagprob = robjects.r['obs.diag.prob']
+        
+        
+        ### Akaike information criterion
+        self.AIC = list(robjects.r['AIC'](obsmlds))[0]
+        
+        #### DAF
+        # function definition
+        robjects.r('''
+                DAF <- function(g) {
+                    (g$obj$null.deviance - deviance(g$obj)) / g$obj$null.deviance  
+                }
+                ''')
+        daf = robjects.globalenv['DAF']        
+        
+        self.DAF = list( daf(obsmlds) )[0]
+        
+        # prob
+        self.prob = list( diagprob[4])[0]
+
+    ##########################################################################    
+    def estimategammalambda(self):
+        pass
+                
 
         
 ###############################################################################
-########################## utilities for this class  #########################   
-def loadMLDSObject(filename):
-    
-    f=open(filename, 'r')
-    r = pickle.load(f)
-    f.close()
-    
-    return r
-    
-    
+########################## utilities for this class  #########################      
     
 def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1):
     
@@ -275,7 +358,8 @@ def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1)
         
         plt.plot(s.stim, s.scale, color= color, label=label, linewidth=linewidth)
 
-        
+
+     
 ###############################################################################
 ########################## utilities for experiments #########################
 ## Utilities for MLDS  experiments

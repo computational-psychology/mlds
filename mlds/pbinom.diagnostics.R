@@ -7,6 +7,7 @@ pbinom.diagnostics <- function(obj, nsim=200, type = "deviance", no.warn = TRUE,
   
   # loads MLDS package on each of the workers
   clusterEvalQ(cl, library(MLDS))
+  clusterEvalQ(cl, library(psyphy))
   
   if (no.warn){
     old.opt <- options(warn = -1)
@@ -22,7 +23,7 @@ pbinom.diagnostics <- function(obj, nsim=200, type = "deviance", no.warn = TRUE,
   res <- parSapply(cl, seq_len(nsim), function(x, obj){
     ys <- rbinom(n, 1, fitted(obj))
     d$resp <- ys
-    br <- mlds(d)
+    br <- mlds(d, lnk= obj$link)
     rs <- residuals(br$obj, type = type)
     rsd <- sort(rs)
     fv.sort <- sort(fitted(br), index.return = TRUE)
