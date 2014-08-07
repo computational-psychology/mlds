@@ -2,7 +2,8 @@
 """
 Utilities for MLDS estimation, interfacing with R.
 
-@author: G. Aguilar, Nov 2013, rev. Apr 2014
+@author: G. Aguilar, Nov 2013, rev. Apr 2014.
+rev. Aug 2014: diagnostics added, saving to R datafile.
 
 TO ADD: save a MLDSObject to a file. Better to save it with pickle, and
 do it loading the csvfile to a data array or so. So the object can be run 
@@ -22,11 +23,11 @@ import uuid
 
 class MLDSObject:
     """
-    MLDS Object allows the quick analysis of perceptual scales from triads or quadruples experiments
+    MLDS Object allows the quick analysis of perceptual scales from triad experiments
     using the maximum-likelihood difference scaling method (Maloney & Yang, 2003). 
     
     It runs the analysis on R, using the MLDS package.
-    It requires, therefore, a running R version with the package installed.
+    It requires, therefore, a running R version with packages MLDS and psyphy installed.
     
     Usage
     ----------
@@ -39,6 +40,7 @@ class MLDSObject:
     keepfiles -> keep temporary R and csv files (default: False) \n
     standardscale -> calculate perceptual scale in range [0,1] (default: True)\n
     getlinearscale -> calculate linear scale as if differencing perfecly (default=False)\n
+    save -> save results into an R datafile\n
    
     Methods
     ----------
@@ -71,10 +73,14 @@ class MLDSObject:
         self.getlinearscale = getlinearscale
         self.saveRobj = save
         
-        self.link="'probit'"
-        self.filename = filename  # csv datafile containing observer responses
-        self.Rdatafile = filename.split('.')[0]+'.MLDS'
+        self.linktype ="probit"
+        self.linkgam  = 0.0
+        self.linklam  = 0.0
         
+        self.filename = filename  # csv datafile containing observer responses
+        
+        self.getRdatafilename()
+         
         # scale and noise param, stimulus vector
         self.scale = None
         self.lscale = None
@@ -104,9 +110,23 @@ class MLDSObject:
         
         # initialize commands for execution in R
         self.initcommands()
+    
+    def getRdatafilename(self, force_refit=False):
+        rootname = self.filename.split('.')[0]
         
+        if self.linkgam==0.0 and self.linklam==0.0:
+            self.Rdatafile = rootname + '_' + self.linktype + '.MLDS'
+            
+        else:
+            self.Rdatafile = rootname + '_' + self.linktype + '_refit' + '.MLDS'
+            
+        if force_refit:
+            self.Rdatafile = rootname + '_' + self.linktype + '_refit' + '.MLDS'
+       
     ###################################################################################################  
     def initcommands(self):
+        
+        self.getRdatafilename()
         
         seq1 = ["library(MLDS)\n",
                 "library(psyphy)\n",
@@ -116,7 +136,7 @@ class MLDSObject:
                 "attr(results, \"stimulus\") <- stim\n",
                 "attr(results, \"invord\") <- as.logical( df$invord )\n",
                 "class(results) <- c(\"mlbs.df\", \"data.frame\")\n",
-                 "obs.mlds <- mlds(results, lnk=%s)\n" % self.link]
+                 "obs.mlds <- mlds(results, lnk=%s.2asym(g = %f, lam = %f))\n" % (self.linktype, self.linkgam, self.linklam) ]
                  
         # writing perceptual scale calculation
         if self.standardscale:
@@ -184,7 +204,7 @@ class MLDSObject:
         
         # saving R objects into datafile
         if self.boot and self.saveRobj:
-            seq4 = ["save(results, obs.mlds, obs.bt, file='%s')\n" % self.Rdatafile]
+            seq4 = ["save(results, obs.mlds, obs.bt, obs.mns, obs.95ci, file='%s')\n" % self.Rdatafile]
         elif self.saveRobj:
             seq4 = ["save(results, obs.mlds, file='%s')\n" % self.Rdatafile]
         else:
@@ -264,6 +284,8 @@ class MLDSObject:
     #################################################################### 
     def rundiagnostics(self): 
         
+        self.getRdatafilename()
+        
         seqdiag = ["library(MLDS)\n", 
         "load('%s')\n" % self.Rdatafile, 
         "library(snow)\n",
@@ -271,7 +293,7 @@ class MLDSObject:
         "workers <- c(%s)\n" % ",".join(self.workers),
         "master <- %s\n" % self.master,
         "obs.diag.prob <- pbinom.diagnostics (obs.mlds, 10000, workers=workers, master=master)\n"
-        "save(results, obs.mlds, obs.bt, obs.diag.prob, file='%s')\n" % self.Rdatafile ]
+        "save(results, obs.mlds, obs.bt, obs.mns, obs.95ci, obs.diag.prob, file='%s')\n" % self.Rdatafile ]
         
        
         # run MLDS analysis in R
@@ -301,14 +323,12 @@ class MLDSObject:
         import rpy2.robjects as robjects
 
         ### loading file
-        robjects.r['load']("%s" % self.Rdatafile)
+        objs = robjects.r['load']("%s" % self.Rdatafile)
+        objl = list(objs)
         
         # loading R objects into python variables
         obsmlds = robjects.r['obs.mlds']
-        #obsbt   = robjects.r['obs.bt']
-        diagprob = robjects.r['obs.diag.prob']
-        
-        
+                
         ### Akaike information criterion
         self.AIC = list(robjects.r['AIC'](obsmlds))[0]
         
@@ -324,13 +344,130 @@ class MLDSObject:
         self.DAF = list( daf(obsmlds) )[0]
         
         # prob
-        self.prob = list( diagprob[4])[0]
+        if 'obs.diag.prob' in objl:
+            diagprob = robjects.r['obs.diag.prob']
+            self.prob = list( diagprob[4])[0]
+        else:
+            print "bootstrap diagnostics are not yet calculated"
+
 
     ##########################################################################    
-    def estimategammalambda(self):
-        pass
-                
+    def estgamlam(self):
+        
+        gamlamfile = str(uuid.uuid4()) + '.csv' 
 
+        # as in the book chapter
+        seq = ["library(MLDS)\n",
+               "library(psyphy)\n",
+               "load('%s')\n" % self.Rdatafile,
+               "resp <- obs.mlds$obj$data$resp\n",
+               "ps <- psyfun.2asym( cbind(resp, 1-resp) ~ . -1 , data= obs.mlds$obj$data, link= %s.2asym)\n" % self.linktype,
+               "c(ps$lambda, plogis(qlogis(ps$lambda) + c(-ps$SElambda, ps$SElambda)))\n",   # as in psyfun.2asym source code
+               "c(ps$gam, plogis(qlogis(ps$gam) + c(-ps$SEgam, ps$SEgam)))\n",
+               "dd <- data.frame( gamma=c(ps$gam, plogis(qlogis(ps$gam) + c(-ps$SEgam, ps$SEgam))),   lambda = c(ps$lambda, plogis(qlogis(ps$lambda) + c(-ps$SElambda, ps$SElambda))) )\n",
+               "write.csv(dd, file=\"%s\")\n" % gamlamfile]
+        
+        
+        proc = subprocess.Popen(["R", "--no-save"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                
+        for line in seq:
+            proc.stdin.write( line )
+        (out, err) = proc.communicate()
+        
+        if self.verbose:
+            print out                    
+        
+        if self.returncode==0:
+            self.readgamlam( gamlamfile )
+        else:
+            print err
+            raise RuntimeError("Error in execution within R (see error output above)")
+            
+    ##########################################################################            
+    def readgamlam(self, gamlamfile):
+        
+        def tofloat(s):
+            try:
+                return round ( float(s), 5 )
+            except ValueError:
+                return np.nan
+            
+        
+        data=[]
+        csvfile = open(gamlamfile, 'rb')
+        reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+        reader.next()
+        for row in reader:
+            data.append( np.asarray(row) )
+        csvfile.close()
+        
+                
+        self.gam = tofloat(data[0][1])
+        self.lam = tofloat(data[0][2])
+        
+        
+        if self.gam > 0.0:
+            self.SEgam = np.array([tofloat(data[1][1]), tofloat(data[2][1])])
+        else:
+            self.SEgam = None
+            
+        if self.lam > 0.0:
+            self.SElam = np.array([tofloat(data[1][2]), tofloat(data[2][2])])
+        else:
+            self.SElam = None
+        
+        os.remove(gamlamfile)
+        
+    ##########################################################################                
+    def load(self, force_refit=False):
+        
+        self.getRdatafilename( force_refit)
+               
+        # scale and bootstrap 
+        self.readobjectresults()
+        
+        # diagnostic measures
+        self.readdiags()
+        
+        
+        
+    ##########################################################################    
+    def readobjectresults(self):
+        
+        import rpy2.robjects as robjects
+
+        ### loading file
+        robjects.r['load']("%s" % self.Rdatafile)
+
+        
+        # loading R objects into python variables
+        obsmlds = robjects.r['obs.mlds']        
+        
+        if self.standardscale:
+            self.sigma = 1.0/ np.array(obsmlds[0])[-1]
+            self.scale = np.array(obsmlds[0]) / np.array(obsmlds[0])[-1]
+        
+        else:
+            self.sigma = list(obsmlds[2])[0]
+            self.scale = np.array(obsmlds[0])
+        
+        self.stim = np.array(obsmlds[1])
+        self.status=1
+        
+        # if bootstrapped
+        if self.boot:
+            obsmns  = robjects.r['obs.mns']
+            obs95ci  = robjects.r['obs.95ci']
+            
+            self.mns = np.array(obsmns)[:-1]
+            self.ci95 =  np.array(obs95ci)[:-1]
+            
+            self.sigmamns = np.array(obsmns )[-1]
+            self.sigmaci95= np.array(obs95ci)[-1]
+            self.status=2
+        
+   
+    
         
 ###############################################################################
 ########################## utilities for this class  #########################      
@@ -474,16 +611,14 @@ if __name__ == "__main__":
     if simplecases:
         # Case 1: Simple scale, unconstrained 
         obs = MLDSObject( 'test.csv', boot=False, standardscale=False) # initialize object
-        obs.run()                                                   # runs Mlds in R
-        obs.save()
-        
-        obs2 = loadMLDSObject('test.mlds')
+        obs.run()                                                   # runs Mlds in R      
+
         
         fig=plt.figure()
-        plt.plot(obs2.stim, obs2.scale)
+        plt.plot(obs.stim, obs.scale)
         plt.xlabel('Stimulus')
         plt.ylabel('Difference scale')
-        plt.title('$\sigma = %.2f$' % obs2.sigma)
+        plt.title('$\sigma = %.2f$' % obs.sigma)
         #plt.show()
         fig.savefig('Fig1.png')
 
