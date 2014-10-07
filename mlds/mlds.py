@@ -70,7 +70,7 @@ class MLDSObject:
         self.boot = boot
         self.keepfiles = keepfiles
         self.standardscale = standardscale
-        self.getlinearscale = getlinearscale
+        self.getlinearscale = getlinearscale  # I will deprecate this
         self.saveRobj = save
         
         self.linktype ="probit"
@@ -128,89 +128,65 @@ class MLDSObject:
         
         self.getRdatafilename()
         
-        seq1 = ["library(MLDS)\n",
+        seq = ["library(MLDS)\n",
                 "library(psyphy)\n",
-               "df <- read.table('%s', sep=" ", header=TRUE)\n" % self.filename,
-                "stim <- sort(unique(df$s1))\n",
-                "results <- data.frame(resp = as.integer(df$Response), S1= match(df$s1, stim), S2=match(df$s2, stim), S3=match(df$s3, stim))\n",
-                "attr(results, \"stimulus\") <- stim\n",
-                "attr(results, \"invord\") <- as.logical( df$invord )\n",
-                "class(results) <- c(\"mlbs.df\", \"data.frame\")\n",
-                 "obs.mlds <- mlds(results, lnk=%s.2asym(g = %f, lam = %f))\n" % (self.linktype, self.linkgam, self.linklam) ]
+               "d.df <- read.table('%s', sep=" ", header=TRUE)\n" % self.filename,
+                "stim <- sort(unique(c(d.df$s1, d.df$s2, d.df$s3)))\n",
+                "results <- with(d.df, data.frame(resp = Response, S1= match(s1, stim), S2=match(s2, stim), S3=match(s3, stim)))\n",
+                "results <- as.mlbs.df(results, st=stim)\n",
+                "obs.mlds <- mlds(results, lnk=%s.2asym(g = %f, lam = %f))\n" % (self.linktype, self.linkgam, self.linklam) ]
                  
         # writing perceptual scale calculation
         if self.standardscale:
-            seq1a = ["ll<- length(obs.mlds$pscale)\n",
+            seq.extend(["ll<- length(obs.mlds$pscale)\n",
                      "pscale <- obs.mlds$pscale/obs.mlds$pscale[ll]\n",
-                     "sigma  <- 1/obs.mlds$pscale[ll]\n"]           
+                     "sigma  <- 1/obs.mlds$pscale[ll]\n"])
         else: 
-            seq1a = ["pscale <- obs.mlds$pscale\n",
-                     "sigma  <- obs.mlds$sigma\n"]  
+            seq.extend(["pscale <- obs.mlds$pscale\n",
+                     "sigma  <- obs.mlds$sigma\n"])  
             
-        seq1 = seq1 + seq1a
             
-        # getting or not linear scale
-        if self.getlinearscale or self.boot:
-            seq1b = ["df$Response2 <- as.integer(abs(df$s1 - df$s2) < abs(df$s2 - df$s3))\n",
-                "results2 <- data.frame(resp = as.integer(df$Response2),  S1= match(df$s1, stim), S2=match(df$s2, stim), S3=match(df$s3, stim))\n",
-                "attr(results2, \"stimulus\") <- stim\n",
-                "attr(results2, \"invord\") <- as.logical( df$invord )\n",
-                "class(results2) <- c(\"mlbs.df\", \"data.frame\")\n",
-                "obs.mlds2 <- mlds(results2)\n"]
-                
-            if self.standardscale:
-                seq1c = ["ll<- length(obs.mlds2$pscale)\n",
-                         "pscale2 <- obs.mlds2$pscale/obs.mlds2$pscale[ll]\n",
-                         "sigma2  <- 1/obs.mlds2$pscale[ll]\n"]
-            else: 
-                seq1c = ["pscale2 <- obs.mlds2$pscale\n",
-                         "sigma2  <- obs.mlds2$sigma\n"]     
-                                
-            seq1 = seq1 + seq1b + seq1c
-        
         # if we want confidence intervals, we need to bootstrap
         if self.boot:
             if self.parallel:
-                seq2a = ["library(snow)\n",
+                seq.extend(["library(snow)\n",
                          "source('~/git/slantfromtex/mlds/pboot.mlds.R')\n",
                          "workers <- c(%s)\n" % ",".join(self.workers),
                          "master <- %s\n" % self.master,
-                         "obs.bt <- pboot.mlds(obs.mlds, 10000, workers = workers, master=master )\n"]
+                         "obs.bt <- pboot.mlds(obs.mlds, 10000, workers = workers, master=master )\n"])
             else:
-                seq2a = ["obs.bt <- boot.mlds(obs.mlds, 10000)\n"]
+                seq.extend(["obs.bt <- boot.mlds(obs.mlds, 10000)\n"])
             
             if self.standardscale:  # still to add
-                seq2b = ["samples <- obs.bt$boot.samp\n"]
+                seq.extend(["samples <- obs.bt$boot.samp\n"])
             else:
-                seq2b = ["n <- nrow(obs.bt$boot.samp)\n",
-                         "samples <- apply(obs.bt$boot.samp, 2, function(x) x/x[n])\n"]
+                seq.extend(["n <- nrow(obs.bt$boot.samp)\n",
+                         "samples <- apply(obs.bt$boot.samp, 2, function(x) x/x[n])\n"])
+            
             # manually computing mean and sd. from the bootstrap samples. R routine for unconstrained scales does not work properly        
-            seq2c = ["obs.mns <- c(0, apply(samples, 1, mean))\n",
-                     "obs.sd  <- c(0, apply(samples, 1, sd))\n",
-                     "obs.95ci <- qnorm(0.975) * obs.sd\n"
-                     "dd <- data.frame( row.names = c( obs.mlds$stimulus, 'sigma'), pscale_obs = c( pscale, sigma), pscale_diff = c( pscale2, sigma2), mns = obs.mns, ci95=obs.95ci)\n"]
-            seq2 = seq2a + seq2b + seq2c
-        
-        # if not, we just save the obtained scale, with or without the linear one
-        elif self.getlinearscale:
-            seq2 = ["dd <- data.frame( row.names = c( obs.mlds$stimulus, 'sigma'), pscale_obs = c( pscale, sigma), pscale_diff = c( pscale2, sigma2))\n"]
+            seq.extend(['obs.mns <- c("0" = 0, apply(samples, 1, mean))\n',
+                     'obs.sd  <- c("0"= 0, apply(samples, 1, sd))\n',
+                     'obs.low <- c("0"=0, apply(samples, 1, quantile, probs = 0.025))\n',
+                     'obs.high <- c("0"=0, apply(samples, 1, quantile, probs = 0.975))\n',
+                     'dd <- data.frame( row.names = c( obs.mlds$stimulus, "sigma"), pscale_obs = c( pscale, sigma), mns = obs.mns, low=obs.low, high=obs.high)\n'])
+
         
         else: 
-            seq2 = ["dd <- data.frame( row.names = c( obs.mlds$stimulus, 'sigma'), pscale_obs = c( pscale, sigma))\n"]
+            seq.extend(["dd <- data.frame( row.names = c( obs.mlds$stimulus, 'sigma'), pscale_obs = c( pscale, sigma))\n"])
         
         # writing file
         self.mldsfile = str(uuid.uuid4()) + '.csv' # csv file with mlds results
-        seq3 = ["write.csv(dd, file=\"%s\")\n" % self.mldsfile]
+        seq.append("write.csv(dd, file=\"%s\")\n" % self.mldsfile)
         
         # saving R objects into datafile
         if self.boot and self.saveRobj:
-            seq4 = ["save(results, obs.mlds, obs.bt, obs.mns, obs.95ci, file='%s')\n" % self.Rdatafile]
+            seq.append("save(results, obs.mlds, obs.bt, obs.mns, obs.low, obs.high, file='%s')\n" % self.Rdatafile)
         elif self.saveRobj:
-            seq4 = ["save(results, obs.mlds, file='%s')\n" % self.Rdatafile]
+            seq.append("save(results, obs.mlds, file='%s')\n" % self.Rdatafile)
         else:
-            seq4 = ["\n"]
+            seq.append("\n")
             
-        self.seq = seq1 + seq2 + seq3 + seq4
+        self.seq = seq
     
     
     ###################################################################################################    
@@ -264,15 +240,13 @@ class MLDSObject:
             self.sigma = float(data[-1][1])
             self.status=1
             
-            if self.getlinearscale or self.boot:
-                self.lscale = arr.T[2]
+            if self.boot:
                 
-                if self.boot:
-                    self.mns = arr.T[3]
-                    self.ci95 = arr.T[4]  
-                    self.sigmamns = float(data[-1][3])
-                    self.sigmaci95= float(data[-1][4])
-                    self.status=2
+                self.mns = arr.T[2]
+                self.ci95 = arr.T[3:]  
+                self.sigmamns = float(data[-1][2])
+                self.sigmaci95= np.array(data[-1][3:], dtype=float)
+                self.status=2
                 
         else:
             print "error in execution"      
@@ -293,7 +267,7 @@ class MLDSObject:
         "workers <- c(%s)\n" % ",".join(self.workers),
         "master <- %s\n" % self.master,
         "obs.diag.prob <- pbinom.diagnostics (obs.mlds, 10000, workers=workers, master=master)\n"
-        "save(results, obs.mlds, obs.bt, obs.mns, obs.95ci, obs.diag.prob, file='%s')\n" % self.Rdatafile ]
+        "save(results, obs.mlds, obs.bt, obs.mns, obs.low, obs.high, obs.diag.prob, file='%s')\n" % self.Rdatafile ]
         
        
         # run MLDS analysis in R
@@ -462,13 +436,14 @@ class MLDSObject:
         # if bootstrapped
         if self.boot:
             obsmns  = robjects.r['obs.mns']
-            obs95ci  = robjects.r['obs.95ci']
+            obslow  = robjects.r['obs.low']
+            obshigh = robjects.r['obs.high']
             
             self.mns = np.array(obsmns)[:-1]
-            self.ci95 =  np.array(obs95ci)[:-1]
+            self.ci95 =  np.vstack( (obslow[:-1], obshigh[:-1]))
             
             self.sigmamns = np.array(obsmns )[-1]
-            self.sigmaci95= np.array(obs95ci)[-1]
+            self.sigmaci95= np.array([obslow[-1], obshigh[-1]])
             self.status=2
         
    
@@ -615,7 +590,7 @@ if __name__ == "__main__":
     
     if simplecases:
         # Case 1: Simple scale, unconstrained 
-        obs = MLDSObject( 'test.csv', boot=False, standardscale=False) # initialize object
+        obs = MLDSObject( 'test/test.csv', boot=False, standardscale=False) # initialize object
         obs.run()                                                   # runs Mlds in R      
 
         
