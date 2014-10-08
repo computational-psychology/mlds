@@ -58,7 +58,7 @@ class TestMLDSClass(unittest.TestCase):
         np.testing.assert_almost_equal(obs.scale, scale, decimal= d)
         
     
-    #@unittest.skip("skipping bootstrap, saving time")
+    @unittest.skip("skipping bootstrap, saving time")
     def test_bootstrap(self):
         obs = mlds.MLDSObject('test.csv', boot=True, save=False)
         obs.parallel=True
@@ -69,7 +69,7 @@ class TestMLDSClass(unittest.TestCase):
         
         self.compare(obs)
     
-    #@unittest.skip("skipping bootstrap, saving time")
+    @unittest.skip("skipping bootstrap, saving time")
     def test_bootstrap_correctedCI(self):
         obs = mlds.MLDSObject('test.csv', boot=True, save=False)
         obs.parallel=True
@@ -110,8 +110,22 @@ class TestMLDSClass(unittest.TestCase):
         self.assertAlmostEqual(obs.DAF, daf, places=d)
 
         
-
-
+#######################################################################
+class TestMLDSComparison(unittest.TestCase):
+        
+    
+    def test_compare(self):
+        obs = mlds.MLDSObject('test.csv', keepfiles=False, boot=False)
+        obs2 = mlds.MLDSObject('test.csv', keepfiles=False, boot=False)
+        
+        obs.run()
+        obs2.run()
+        
+        comp = mlds.MLDSCompare([obs, obs2])
+        
+    
+    
+    
 if __name__ == '__main__':
     unittest.main()
     

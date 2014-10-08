@@ -83,7 +83,7 @@ class MLDSObject:
          
         # scale and noise param, stimulus vector
         self.scale = None
-        self.lscale = None
+        self.lscale = None  # deprecating this
         self.stim = None
         self.sigma = None
         
@@ -111,6 +111,23 @@ class MLDSObject:
         
         # initialize commands for execution in R
         self.initcommands()
+        
+        
+    def printinfo(self):
+        print "MLDSObject based on file %s " % self.filename
+        if self.status==0:
+            print "not yet run"
+        elif self.status==1 or self.status==2:
+            print "   stimulus: ", self.stim
+            print "   scale: ", self.scale
+            print "   sigma: ", self.sigma
+        
+        if self.status==2:
+            print "   ci 2.5%: ", self.ci95[0]
+            print "   ci 97.5%: ", self.ci95[1]
+            if self.correctedCI:
+                print "corrected CIs"
+        
     
     def getRdatafilename(self, force_refit=False):
         rootname = self.filename.split('.')[0]
@@ -452,9 +469,8 @@ class MLDSObject:
             self.sigmamns = np.array(obsmns )[-1]
             self.sigmaci95= np.array([obslow[-1], obshigh[-1]])
             self.status=2
-        
-   
-    
+            
+
         
 ###############################################################################
 ########################## utilities for this class  #########################      
@@ -481,6 +497,47 @@ def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1)
             label = "%s" % observer
         
         plt.plot(s.stim, s.scale, color= color, label=label, linewidth=linewidth)
+
+###############################################################################
+###############################################################################
+
+
+class MLDSCompare:
+    """
+    MLDSCompare object stores MLDSObjects and compare them using statistical methods. 
+    
+    
+    Usage
+    ----------
+    
+
+    Methods
+    ----------
+
+
+    Attributes
+    ----------
+    
+
+    """
+    
+    def __init__(self, listofMLDSObjects):
+        
+        self.objs = listofMLDSObjects
+        
+        # printing info of each MLDS object
+        for obj in listofMLDSObjects:
+            obj.printinfo()
+        
+    
+    def anova():
+        """
+        Analysis of deviance for MLDS Objects using the GLM estimation.
+        
+        """
+        
+        pass
+
 
 
      
