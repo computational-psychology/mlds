@@ -30,7 +30,12 @@ aic = 570.3924
 daf = 0.5187585
 prob = 0.927
 
-#
+# corrected CI
+low_C=np.array([0.00000000, 0.06550406, 0.10849741, 0.18226010, 0.21574120, 0.29597577, 0.40533268, 0.50275388, 0.67041595, 0.77105617, 1.00000000])
+high_C= np.array([0.00000000, -0.02149037, 0.02468978, 0.10483483, 0.13793712, 0.22326763, 0.33504963, 0.43554262, 0.59778788, 0.68618777, 1.00000000])
+ci95_corrected = np.vstack((low_C, high_C))
+
+########################################################################
 
 class TestMLDSClass(unittest.TestCase):
     
@@ -62,7 +67,17 @@ class TestMLDSClass(unittest.TestCase):
         obs.run()
         
         self.compare(obs)
-
+    
+    @unittest.skip("skipping bootstrap, saving time")
+    def test_bootstrap_correctedCI(self):
+        obs = mlds.MLDSObject('test.csv', boot=True, save=False)
+        obs.parallel=True
+        obs.master= '"localhost"'
+        obs.workers= ['"localhost"']*4
+        obs.correctedCI=True
+        obs.run()
+        
+        np.testing.assert_almost_equal(obs.ci95, ci95_corrected, decimal=d)
         
     def test_readcsv(self):
         obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=True)

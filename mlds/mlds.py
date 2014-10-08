@@ -88,6 +88,7 @@ class MLDSObject:
         self.sigma = None
         
         # bootstrap 
+        self.correctedCI= False
         self.mns = None
         self.ci95 = None
         self.sigmamns = None
@@ -167,8 +168,14 @@ class MLDSObject:
             seq.extend(['obs.mns <- c("0" = 0, apply(samples, 1, mean))\n',
                      'obs.sd  <- c("0"= 0, apply(samples, 1, sd))\n',
                      'obs.low <- c("0"=0, apply(samples, 1, quantile, probs = 0.025))\n',
-                     'obs.high <- c("0"=0, apply(samples, 1, quantile, probs = 0.975))\n',
-                     'dd <- data.frame( row.names = c( obs.mlds$stimulus, "sigma"), pscale_obs = c( pscale, sigma), mns = obs.mns, low=obs.low, high=obs.high)\n'])
+                     'obs.high <- c("0"=0, apply(samples, 1, quantile, probs = 0.975))\n'])
+            
+            # Efron's corrected CI, suggested by Ken.
+            if self.correctedCI:
+                seq.extend(['obs.low <- 2*obs.mns - obs.low\n',
+                            'obs.high <- 2*obs.mns - obs.high\n'])
+                     
+            seq.append('dd <- data.frame( row.names = c( obs.mlds$stimulus, "sigma"), pscale_obs = c( pscale, sigma), mns = obs.mns, low=obs.low, high=obs.high)\n')
 
         
         else: 
@@ -579,9 +586,9 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import time
     
-    simplecases=False
+    simplecases=True
     bootstrap=False
-    benchmark=True
+    benchmark=False
     
     
     
