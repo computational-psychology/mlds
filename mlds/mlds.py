@@ -170,10 +170,10 @@ class MLDSObject:
                      'obs.low <- c("0"=0, apply(samples, 1, quantile, probs = 0.025))\n',
                      'obs.high <- c("0"=0, apply(samples, 1, quantile, probs = 0.975))\n'])
             
-            # Efron's corrected CI, suggested by Ken.
+            # Efron's corrected CI, suggested by Ken. Check this in the book, it reverts the low and high CI order.
             if self.correctedCI:
-                seq.extend(['obs.low <- 2*obs.mns - obs.low\n',
-                            'obs.high <- 2*obs.mns - obs.high\n'])
+                seq.extend(['obs.low <- 2*obs.mns - obs.high\n',
+                            'obs.high <- 2*obs.mns - obs.low\n'])
                      
             seq.append('dd <- data.frame( row.names = c( obs.mlds$stimulus, "sigma"), pscale_obs = c( pscale, sigma), mns = obs.mns, low=obs.low, high=obs.high)\n')
 
