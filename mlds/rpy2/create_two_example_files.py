@@ -10,8 +10,8 @@ import os
 import numpy as np
 
 
-gamma1 = 1.5 
-gamma2 = 3
+gamma1 = 2
+gamma2 = 2.4
 N = 11
 nblocks = 15
 
