@@ -475,7 +475,7 @@ class MLDSObject:
 ###############################################################################
 ########################## utilities for this class  #########################      
     
-def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1):
+def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1, **kargs):
     
     import matplotlib.pyplot as plt
 
@@ -487,8 +487,12 @@ def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1)
             
         #plt.errorbar(s.stim, s.mns, yerr=s.ci95, label=label)
         stimoff= np.hstack((0, s.stim[1:]+ offset))
-        plt.errorbar(stimoff, s.mns, yerr= s.ci95, fmt=None, ecolor= color, elinewidth=elinewidth)
-        plt.plot(s.stim, s.mns, color= color, label=label, linewidth=linewidth)
+        if s.ci95.shape[0]==2:
+            yerr = abs(s.ci95 - s.mns)
+        elif s.ci95.shape[0]==1:
+            yerr = s.ci95
+        plt.errorbar(stimoff, s.mns, yerr= yerr, fmt=None, ecolor= color, elinewidth=elinewidth)
+        plt.plot(s.stim, s.mns, color= color, label=label, linewidth=linewidth, **kargs)
         
     else:
         if s.standardscale:
@@ -496,15 +500,15 @@ def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1)
         else:
             label = "%s" % observer
         
-        plt.plot(s.stim, s.scale, color= color, label=label, linewidth=linewidth)
+        plt.plot(s.stim, s.scale, color= color, label=label, linewidth=linewidth, **kargs)
 
 ###############################################################################
 ###############################################################################
 
 
-class MLDSCompare:
+class MLDSGAMCompare:
     """
-    MLDSCompare object stores MLDSObjects and compare them using statistical methods. 
+    MLDSCompare object stores MLDSObjects and compare them using GAM. 
     
     
     Usage
@@ -521,7 +525,7 @@ class MLDSCompare:
 
     """
     
-    def __init__(self, listofMLDSObjects):
+    def __init__(self):
         
         self.objs = listofMLDSObjects
         

@@ -1,5 +1,4 @@
 library(MLDS)
-library(psyphy)
 
 d.df <- read.table('first.csv', sep=, header=TRUE)  
 d.df2 <- read.table('second.csv', sep=, header=TRUE)  
@@ -31,7 +30,7 @@ bias2 <- m2.glm$pscale - m2.glm2$pscale
 anova(m1.glm$obj, m2.glm$obj)
 anova(m1.glm2$obj, m2.glm2$obj)
 
-m.glm <- mlds(d1, lnk = "probit")
+m.glm <- mlds(dall, lnk = "probit")
 
 #########
 library(mgcv)
@@ -42,7 +41,7 @@ dfst <- as.mlbs.df(dfst, st = stim)  # not nec. except to attach invord attr
 dfst[attr(dfst, "invord"), -1] <- dfst[attr(dfst, "invord"), 4:2]
 dfst[attr(dfst, "invord"), 1] <- 1 - dfst[attr(dfst, "invord"), 1]
 
-k = 4
+k <- 4
 
 by.mat <- matrix(c(1, -2, 1), nc = 3, nr = nrow(dfst), byrow = TRUE)
 S.mat <- with(dfst, cbind(S1 = S1, S2 = S2, S3 = S3))
@@ -59,7 +58,7 @@ plot(m.gam, shade = TRUE,
      xlab = "Stimulus", ylab = "Difference Scale")
 
 # + mean(coef(m1.glm))   --> puts minimum at zero
-lines(pang, m.pred + mean(coef(m.glm)), lty = 2, lwd = 4, col = "orange")  
+lines(pang, m.pred + mean(c(0, coef(m.glm))), lty = 2, lwd = 4, col = "orange")  
 points(m.glm, pch = 21, bg = "white")
 # 
 # plot(pang, m.pred + mean(coef(m.glm))) # this command to be used
