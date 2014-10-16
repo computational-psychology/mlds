@@ -20,7 +20,7 @@ r = robjects.r
 
 file1 = 'first.csv'
 file2 = 'second.csv'
-file3 = 'third.csv'
+file3 = 'thrid.csv'
 
 obs1 = mlds.MLDSObject( file1, standardscale =False, boot=False)
 obs2 = mlds.MLDSObject( file2, standardscale =False, boot=False)
@@ -31,24 +31,31 @@ obs3.run()
 
 
 ##
+# for loop
+d_df1 = r('df1 <- read.table("%s", sep=, header=TRUE)' % file1)
+d_df2 = r('df2 <- read.table("%s", sep=, header=TRUE)' % file2)
+d_df3 = r('df3 <- read.table("%s", sep=, header=TRUE)' % file3)
+d_all = r('dfall <- rbind(df1, df2, df3)')
 
-d_df1 = r('d.df1 <- read.table("%s", sep=, header=TRUE)' % file1)
-d_df2 = r('d.df2 <- read.table("%s", sep=, header=TRUE)' % file2)
-d_all = r('d.all <- rbind(d.df1, d.df2)')
+stim = r('stim <- sort(unique(c(dfall$s1, dfall$s2, dfall$s3)))')
 
-stim = r('stim <- sort(unique(c(d.all$s1, d.all$s2, d.all$s3)))')
+# for loop
+r('d1 <- with(df1, data.frame(resp = Response, S1 = i1, S2 = i2, S3 = i3))')
+r('d2 <- with(df2, data.frame(resp = Response, S1 = i1, S2 = i2, S3 = i3))')
+r('d3 <- with(df3, data.frame(resp = Response, S1 = i1, S2 = i2, S3 = i3))')
+r('dall <- with(dfall, data.frame(resp = Response, S1 = i1, S2 = i2, S3 = i3))')
 
-r('d1 <- with(d.df1, data.frame(resp = Response, S1 = i1, S2 = i2, S3 = i3))')
-r('d2 <- with(d.df2, data.frame(resp = Response, S1 = i1, S2 = i2, S3 = i3))')
-r('dall <- with(d.all, data.frame(resp = Response, S1 = i1, S2 = i2, S3 = i3))')
-
+# for loop
 d1 = r('d1 <- as.mlbs.df(d1, st = stim)')
 d2 = r('d2 <- as.mlbs.df(d2, st = stim)')
+d3 = r('d3 <- as.mlbs.df(d3, st = stim)')
 dall = r('dall <- as.mlbs.df(dall, st = stim)')
 
 # MLDS calculated via GLM
+# for loop
 m1_glm = r('m1.glm <- mlds(d1, lnk="probit")')
 m2_glm = r('m2.glm <- mlds(d2, lnk="probit")')
+m3_glm = r('m3.glm <- mlds(d3, lnk="probit")')
 m_glm = r('m.glm <- mlds(dall, lnk="probit")')
 
 
@@ -58,13 +65,13 @@ k = r('k <- 4') # smoothing parameter
 
 # preparing dataframe
 
-dfst = r('dfst <- with(d.all, data.frame(resp = Response, S1 = s1, S2 = s2, S3 = s3))')
+dfst = r('dfst <- with(dfall, data.frame(resp = Response, S1 = s1, S2 = s2, S3 = s3))')
 dfst = r('dfst <- as.mlbs.df(dfst, st = stim) ')
 dfst = r('dfst[attr(dfst, "invord"), -1] <- dfst[attr(dfst, "invord"), 4:2]') # reverting the stimulus order according to invord attribute
 dfst = r('dfst[attr(dfst, "invord"), 1] <- 1 - dfst[attr(dfst, "invord"), 1]') # reverting responses according to invord attribute
 
 
-# gam call
+# gam call for all data together
 by_mat = r('by.mat <- matrix(c(1, -2, 1), nc = 3, nr = nrow(dfst), byrow = TRUE)')
 S_mat =  r('S.mat <- with(dfst, cbind(S1 = S1, S2 = S2, S3 = S3))')
 m_gam =  r('m.gam <- gam(resp ~ s(S.mat, k = k, by = by.mat), family = binomial(probit), data = dfst)')
@@ -83,6 +90,7 @@ m_zero = r('m.pred - m.pred[1]')  # zero as anchor at stim = zero
 # evaluating separatedely
 first = r('first <- rbind( by.mat[1:nrow(d1),] , by.mat[(nrow(d1)+1):nrow(d.all), ] * 0)')
 second = r('second <- rbind( by.mat[1:nrow(d1),]*0 , by.mat[(nrow(d1)+1):nrow(d.all), ] )')
+
 
 m_gam2 = r('m.gam2 <- gam(resp ~ s(S.mat, k = k, by = first) + s(S.mat, k = k, by = second), family = binomial(probit), data = dfst)')
 
