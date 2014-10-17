@@ -10,25 +10,17 @@ import os
 import numpy as np
 
 
-gamma1 = 1
-gamma2 = 2
-gamma3 = 1.5
+gammas = [1, 2, 1.5, 1.8]
+sigma = 0.2
 
 N = 11
 nblocks = 15
 
-sigma1 = 0.2
-sigma2 = 0.2
-sigma3 = 0.2
-
 
 stim = np.linspace(0,1,N)
 
-f = sim_scales_powerfn.simulateobserver(sim_scales_powerfn.psi, sigma1, stim, nblocks, gamma1) 
-os.rename(f, 'first.csv')
+for i in range(len(gammas)):
+    f = sim_scales_powerfn.simulateobserver(sim_scales_powerfn.psi, sigma, stim, nblocks, gammas[i]) 
+    os.rename(f, '%d.csv' % i ) 
 
-f = sim_scales_powerfn.simulateobserver(sim_scales_powerfn.psi, sigma2, stim, nblocks, gamma2) 
-os.rename(f, 'second.csv')
 
-f = sim_scales_powerfn.simulateobserver(sim_scales_powerfn.psi, sigma3, stim, nblocks, gamma3) 
-os.rename(f, 'thrid.csv')

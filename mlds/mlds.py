@@ -5,11 +5,6 @@ Utilities for MLDS estimation, interfacing with R.
 @author: G. Aguilar, Nov 2013, rev. Apr 2014.
 rev. Aug 2014: diagnostics added, saving to R datafile.
 
-TO ADD: save a MLDSObject to a file. Better to save it with pickle, and
-do it loading the csvfile to a data array or so. So the object can be run 
-from csvfile or from data array. This would imply, if data is non-empty, to 
-save the data on a csvfile and that is passed to R.
-
 """
 
 import numpy as np
@@ -502,49 +497,7 @@ def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1,
         
         plt.plot(s.stim, s.scale, color= color, label=label, linewidth=linewidth, **kargs)
 
-###############################################################################
-###############################################################################
-
-
-class MLDSGAMCompare:
-    """
-    MLDSCompare object stores MLDSObjects and compare them using GAM. 
-    
-    
-    Usage
-    ----------
-    
-
-    Methods
-    ----------
-
-
-    Attributes
-    ----------
-    
-
-    """
-    
-    def __init__(self):
-        
-        self.objs = listofMLDSObjects
-        
-        # printing info of each MLDS object
-        for obj in listofMLDSObjects:
-            obj.printinfo()
-        
-    
-    def anova():
-        """
-        Analysis of deviance for MLDS Objects using the GLM estimation.
-        
-        """
-        
-        pass
-
-
-
-     
+###############################################################################    
 ###############################################################################
 ########################## utilities for experiments #########################
 ## Utilities for MLDS  experiments

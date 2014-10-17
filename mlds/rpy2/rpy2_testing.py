@@ -18,53 +18,47 @@ mgcv = importr("mgcv")
 
 r = robjects.r
 
-file1 = 'first.csv'
-file2 = 'second.csv'
-file3 = 'thrid.csv'
+#files = ['first.csv', 'second.csv', 'thrid.csv']
+#files = ['first.csv', 'second.csv']
+files = ['0.csv', '1.csv', '2.csv', '3.csv']
 
-obs1 = mlds.MLDSObject( file1, standardscale =False, boot=False)
-obs2 = mlds.MLDSObject( file2, standardscale =False, boot=False)
-obs3 = mlds.MLDSObject( file2, standardscale =False, boot=False)
-obs1.run()
-obs2.run()
-obs3.run()
+objs = [mlds.MLDSObject( file, standardscale =False, boot=False) for file in files]
+[o.run() for o in objs]
 
 
 ##
-# for loop
-d_df1 = r('df1 <- read.table("%s", sep=, header=TRUE)' % file1)
-d_df2 = r('df2 <- read.table("%s", sep=, header=TRUE)' % file2)
-d_df3 = r('df3 <- read.table("%s", sep=, header=TRUE)' % file3)
-d_all = r('dfall <- rbind(df1, df2, df3)')
+l = []
+nrows = []
+for i,file in enumerate(files):
+    # read data from file to dataframes
+    df= r('df%d <- read.table("%s", sep=, header=TRUE)' % (i, file))
+    nrows.append( list(r['nrow'](df))[0] )
+    l.append('df%d' % i)
+    
+d_all = r('dfall <- rbind(%s)' % ",".join(l))
+stim = r('stim <- sort(unique(c(dfall$s1, dfall$s2, dfall$s3)))')    
+nrowall = list(r['nrow'](d_all))[0]
+assert(nrowall == sum(nrows))
 
-stim = r('stim <- sort(unique(c(dfall$s1, dfall$s2, dfall$s3)))')
-
-# for loop
-r('d1 <- with(df1, data.frame(resp = Response, S1 = i1, S2 = i2, S3 = i3))')
-r('d2 <- with(df2, data.frame(resp = Response, S1 = i1, S2 = i2, S3 = i3))')
-r('d3 <- with(df3, data.frame(resp = Response, S1 = i1, S2 = i2, S3 = i3))')
-r('dall <- with(dfall, data.frame(resp = Response, S1 = i1, S2 = i2, S3 = i3))')
-
-# for loop
-d1 = r('d1 <- as.mlbs.df(d1, st = stim)')
-d2 = r('d2 <- as.mlbs.df(d2, st = stim)')
-d3 = r('d3 <- as.mlbs.df(d3, st = stim)')
-dall = r('dall <- as.mlbs.df(dall, st = stim)')
-
-# MLDS calculated via GLM
-# for loop
-m1_glm = r('m1.glm <- mlds(d1, lnk="probit")')
-m2_glm = r('m2.glm <- mlds(d2, lnk="probit")')
-m3_glm = r('m3.glm <- mlds(d3, lnk="probit")')
-m_glm = r('m.glm <- mlds(dall, lnk="probit")')
+#### MLDS GLM format
+#for i,file in enumerate(files):
+#    # set to mlds format
+#    r('d%d <- with(df%d, data.frame(resp = Response, S1 = i1, S2 = i2, S3 = i3))' % (i,i))
+#    r('d%d <- as.mlbs.df(d%d, st = stim)' % (i,i))
+#
+#    # MLDS calculated via GLM
+#    r('m%d.glm <- mlds(d%d, lnk="probit")' % (i,i))
+#
+#
+#r('dall <- with(dfall, data.frame(resp = Response, S1 = i1, S2 = i2, S3 = i3))')
+#dall = r('dall <- as.mlbs.df(dall, st = stim)')
+#m_glm = r('m.glm <- mlds(dall, lnk="probit")')
 
 
 ########## GAM
-
 k = r('k <- 4') # smoothing parameter
 
 # preparing dataframe
-
 dfst = r('dfst <- with(dfall, data.frame(resp = Response, S1 = s1, S2 = s2, S3 = s3))')
 dfst = r('dfst <- as.mlbs.df(dfst, st = stim) ')
 dfst = r('dfst[attr(dfst, "invord"), -1] <- dfst[attr(dfst, "invord"), 4:2]') # reverting the stimulus order according to invord attribute
@@ -80,52 +74,119 @@ print m_gam
 # 
 svec = r('svec <- seq(0, 1, len = 100)')  # stimulus vector
 nd = r('nd <-  list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), by.mat = matrix(1, nc = 3, nr = length(svec)))') # new data object
+
 m_pred = r('m.pred <- predict(m.gam, newdata = nd, type = "link")') # predict from m.gam object, using new data
 m_pred = r('m.pred <- m.pred - mean(m.pred)')  # centering at zero 
-#m_zero = r('m.pred + mean(c(0, coef(m.glm)))')  # zero as anchor at stim = zero
-m_zero = r('m.pred - m.pred[1]')  # zero as anchor at stim = zero
+m_zero = np.array(r('m.pred - m.pred[1]'))  # zero as anchor at stim = zero
 
 
+### evaluating separatedely. This preparation code could be done better,
+# but I cannot find a way to  do it cleaner and dynamic.. 
+# instead I'm  writing all the conditions. not wasting time on this, maybe in the future
+line = np.array([1, -2, 1])
+s = np.concatenate(([0], np.cumsum(nrows[:-1])))
+e = s+nrows
+s=s+1
 
-# evaluating separatedely
-first = r('first <- rbind( by.mat[1:nrow(d1),] , by.mat[(nrow(d1)+1):nrow(d.all), ] * 0)')
-second = r('second <- rbind( by.mat[1:nrow(d1),]*0 , by.mat[(nrow(d1)+1):nrow(d.all), ] )')
+block= 'by.mat[%d:%d,]'
+noblock = 'by.mat[%d:%d, ] * 0'
+
+if len(files)==4:
+    
+    sec0 = r('sec0 <- rbind( %s , %s, %s, %s )' % ( block % (s[0], e[0]), 
+                                                noblock % (s[1], e[1]), 
+                                                noblock % (s[2], e[2]),
+                                                noblock % (s[3], e[3])  ) )
+                                                
+    sec1 = r('sec1 <- rbind( %s , %s, %s, %s )' % ( noblock % (s[0], e[0]), 
+                                                block % (s[1], e[1]), 
+                                                noblock % (s[2], e[2]),
+                                                noblock % (s[3], e[3])  ) )
+                                                
+    sec2 = r('sec2 <- rbind( %s , %s, %s, %s )' % ( noblock % (s[0], e[0]), 
+                                                noblock % (s[1], e[1]), 
+                                                block % (s[2], e[2]),
+                                                noblock % (s[3], e[3])  ) )
+                                                
+    sec3 = r('sec3 <- rbind( %s , %s, %s, %s )' % ( noblock % (s[0], e[0]), 
+                                                noblock % (s[1], e[1]), 
+                                                noblock % (s[2], e[2]),
+                                                block % (s[3], e[3])  ) )                                            
+                                                
+    gamcall = 'm.gam2 <- gam(resp ~ s(S.mat, k = k, by = sec0) + s(S.mat, k = k, by = sec1)+ s(S.mat, k = k, by = sec2) + s(S.mat, k = k, by = sec3), family = binomial(probit), data = dfst)'                                           
+       
+    nd0 = r('nd0 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(1, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)), sec3 = matrix(0, nc = 3, nr = length(svec)))')
+    nd1 = r('nd1 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(1, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)), sec3 = matrix(0, nc = 3, nr = length(svec)))')
+    nd2 = r('nd2 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)), sec2 = matrix(1, nc = 3, nr = length(svec)), sec3 = matrix(0, nc = 3, nr = length(svec)))')
+    nd3 = r('nd3 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)), sec3 = matrix(1, nc = 3, nr = length(svec)))')
+          
+       
+elif len(files)==3:
+    
+    sec0 = r('sec0 <- rbind( %s , %s, %s )' % ( block % (s[0], e[0]), 
+                                                noblock % (s[1], e[1]), 
+                                                noblock % (s[2], e[2])  ) )
+                                                
+    sec1 = r('sec1 <- rbind( %s , %s, %s )' % ( noblock % (s[0], e[0]), 
+                                                block % (s[1], e[1]), 
+                                                noblock % (s[2], e[2])  ) )
+                                                
+    sec2 = r('sec2 <- rbind( %s , %s, %s )' % ( noblock % (s[0], e[0]), 
+                                                noblock % (s[1], e[1]), 
+                                                block % (s[2], e[2])  ) )
+    gamcall = 'm.gam2 <- gam(resp ~ s(S.mat, k = k, by = sec0) + s(S.mat, k = k, by = sec1)+ s(S.mat, k = k, by = sec2), family = binomial(probit), data = dfst)'                                           
+     
+    nd0 = r('nd0 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(1, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)))')
+    nd1 = r('nd1 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(1, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)))')
+    nd2 = r('nd2 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)), sec2 = matrix(1, nc = 3, nr = length(svec)))')
+                                             
+elif len(files)==2:
+    
+    sec0 = r('sec0 <- rbind( %s , %s )' % ( block % (s[0], e[0]), 
+                                                noblock % (s[1], e[1]) ) )
+                                                
+    sec1 = r('sec1 <- rbind( %s , %s )' % ( noblock % (s[0], e[0]), 
+                                                block % (s[1], e[1])  ) )
+                                                
+    gamcall = 'm.gam2 <- gam(resp ~ s(S.mat, k = k, by = sec0) + s(S.mat, k = k, by = sec1), family = binomial(probit), data = dfst)'                                           
+        
+    
+    nd0 = r('nd0 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(1, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)))')
+    nd1 = r('nd1 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(1, nc = 3, nr = length(svec)))')
 
 
-m_gam2 = r('m.gam2 <- gam(resp ~ s(S.mat, k = k, by = first) + s(S.mat, k = k, by = second), family = binomial(probit), data = dfst)')
+else:
+    raise('not implemented for more than 4 files (yet)')
 
-rsummary = r('summary')
+
+# calling GAM                         
+m_gam2 = r(gamcall)
+
 ranova = r('anova')
 
-print rsummary(m_gam2)
+print r['summary'](m_gam2)
 anovares = ranova(m_gam, m_gam2, test = "Chisq") 
 print anovares   # ANOVA correctly detect a better fit if separated.
 print anovares[4]  # p- value
 
+def predict(i):
+    r('m0.pred <- predict(m.gam2, newdata = nd%d, type = "link")' % i) # predict from m.gam object, using new data
+    r('m0.pred <- m0.pred - mean(m0.pred)')  # centering at zero 
+    #m_zero = r('m0.pred + mean(c(0, coef(m0.glm)))')  # zero as anchor
+    m_zero = r('m0.pred - m0.pred[1]')                # zero as anchor 
+    return np.array(m_zero)
+    
 
-nd1 = r('nd1 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), first = matrix(1, nc = 3, nr = length(svec)), second = matrix(0, nc = 3, nr = length(svec)))')
-nd2 = r('nd2 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), first = matrix(0, nc = 3, nr = length(svec)), second = matrix(1, nc = 3, nr = length(svec)))')
-
-
-m1_pred = r('m1.pred <- predict(m.gam2, newdata = nd1, type = "link")') # predict from m.gam object, using new data
-m1_pred = r('m1.pred <- m1.pred - mean(m1.pred)')  # centering at zero 
-#m1_zero = r('m1.pred + mean(c(0, coef(m1.glm)))')  # zero as anchor
-m1_zero = r('m1.pred - m1.pred[1]')                # zero as anchor 
-
-
-m2_pred = r('m2.pred <- predict(m.gam2, newdata = nd2, type = "link")') # predict from m.gam object, using new data
-m2_pred = r('m2.pred <- m2.pred - mean(m2.pred)')  # centering at zero 
-#m2_zero = r('m2.pred + mean(c(0, coef(m2.glm)))')  # zero as anchor a
-m2_zero = r('m2.pred - m2.pred[1]')  # zero as anchor 
-
+mzeros = np.zeros((len(svec), len(files)))
+for i in range(len(files)):
+    mzeros[:,i] = predict(i)
 
 ##
 plt.figure()
-plt.plot(np.array(svec), np.array(m_zero), label="GAM all", linewidth=2)
-plt.plot(np.array(svec), np.array(m1_zero), label="GAM first", linewidth=2)
-plt.plot(np.array(svec), np.array(m2_zero), label="GAM second", linewidth=2)
-mlds.plotscale(obs1, observer="GLM first", color='green', marker='o', linewidth=0)
-mlds.plotscale(obs2, observer="GLM second", color='red', marker='o', linewidth=0)
+plt.plot(svec, m_zero, label="GAM all", linewidth=2)
+for i in range(len(files)):
+    plt.plot(svec, mzeros[:,i], label="GAM %d" % i, linewidth=2)
+    mlds.plotscale(objs[i], observer="GLM %d" % i, marker='o', linewidth=0)
 plt.legend(loc=2)
 plt.show()
 
