@@ -8,6 +8,7 @@ Unittests for mlds module
 import sys
 sys.path.append('../')
 import mlds
+import mlds_gam
 import unittest
 import numpy as np
 
@@ -113,18 +114,25 @@ class TestMLDSClass(unittest.TestCase):
 #######################################################################
 class TestMLDSComparison(unittest.TestCase):
         
-    
-    def test_compare(self):
-        obs = mlds.MLDSObject('test.csv', keepfiles=False, boot=False)
-        obs2 = mlds.MLDSObject('test.csv', keepfiles=False, boot=False)
+    def test_gam_run4(self):
         
-        obs.run()
-        obs2.run()
+        files = ['0.csv', '1.csv', '2.csv', '3.csv']
+        gam = mlds_gam.MLDSGAMCompare(files)
+        gam.run()
         
-        comp = mlds.MLDSCompare([obs, obs2])
+    def test_gam_run3(self):
         
-    
-    
+        files = ['1.csv', '2.csv', '3.csv']
+        gam = mlds_gam.MLDSGAMCompare(files)
+        gam.run()
+        
+    def test_gam_run2(self):
+        
+        files = ['1.csv', '2.csv']
+        gam = mlds_gam.MLDSGAMCompare(files)
+        gam.run()
+        
+
     
 if __name__ == '__main__':
     unittest.main()
