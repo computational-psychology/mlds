@@ -31,13 +31,30 @@ class MLDSGAMCompare:
         
     """
     
-    def __init__(self, files):
+    def __init__(self, files, dividedby=None):
         
-        self.files = files
+        self.files  = files
+        assert(isinstance(files, list))
+        assert(len(files)>=1)
+        
+        self.dividedby = dividedby
+        
+        if len(files)==1 and dividedby==None:
+            raise Exception('For one file argument, dividedby > 1 must be provided')
+        if len(files)==1:
+            assert(dividedby > 1)
+            
+        
+        
+        # GAM parameters
+        self.k = 4  # smooth parameter
+        
+        # Saving results
         self.scales    = []
         self.scale_all = []
         self.stim = []
         self.anovares = []
+        
         
     
     def run(self):
@@ -63,7 +80,7 @@ class MLDSGAMCompare:
         
         
         ########## GAM
-        k = r('k <- 4') # smoothing parameter
+        r('k <- %d' % self.k)  # smoothing parameter
         
         # preparing dataframe
         dfst = r('dfst <- with(dfall, data.frame(resp = Response, S1 = s1, S2 = s2, S3 = s3))')
@@ -90,14 +107,35 @@ class MLDSGAMCompare:
         ### evaluating separatedely. This preparation code could be done better,
         # but I cannot find a way to  do it cleaner and dynamic.. 
         # instead I'm  writing all the conditions. not wasting time on this, maybe in the future
-        s = np.concatenate(([0], np.cumsum(nrows[:-1])))
-        e = s+nrows
-        s=s+1
-        
         block= 'by.mat[%d:%d,]'
         noblock = 'by.mat[%d:%d, ] * 0'
         
-        if len(self.files)==4:
+        if len(self.files) > 1:
+            nparts = len(self.files)
+            
+            # determining indices where to split dataframe
+            s = np.concatenate(([0], np.cumsum(nrows[:-1])))
+            e = s+nrows
+            s=s+1
+            
+        elif len(self.files)==1:
+            nparts = self.dividedby
+            chunksize = int(np.ceil(nrows[0]/float(nparts)))
+            s=[]
+            e=[]
+            c=0
+            for i in range(nparts):
+                s.append(c*chunksize + 1)
+                p = (c+1)*chunksize if (c+1)*chunksize <= nrows[0] else nrows[0]
+                e.append(p)
+                c+=1
+                
+            
+        elif len(self.files)>4:
+            raise Exception('not implemented for more than 4 files (yet)')
+        
+        
+        if nparts==4:
             
             sec0 = r('sec0 <- rbind( %s , %s, %s, %s )' % ( block % (s[0], e[0]), 
                                                         noblock % (s[1], e[1]), 
@@ -127,7 +165,7 @@ class MLDSGAMCompare:
             nd3 = r('nd3 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)), sec3 = matrix(1, nc = 3, nr = length(svec)))')
                   
                
-        elif len(self.files)==3:
+        elif nparts==3:
             
             sec0 = r('sec0 <- rbind( %s , %s, %s )' % ( block % (s[0], e[0]), 
                                                         noblock % (s[1], e[1]), 
@@ -146,7 +184,7 @@ class MLDSGAMCompare:
             nd1 = r('nd1 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(1, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)))')
             nd2 = r('nd2 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)), sec2 = matrix(1, nc = 3, nr = length(svec)))')
                                                      
-        elif len(self.files)==2:
+        elif nparts==2:
             
             sec0 = r('sec0 <- rbind( %s , %s )' % ( block % (s[0], e[0]), 
                                                         noblock % (s[1], e[1]) ) )
@@ -162,7 +200,7 @@ class MLDSGAMCompare:
         
         
         else:
-            raise('not implemented for more than 4 files (yet)')
+            raise('not implemented for less than 1 part, or more then 4 parts')
         
         
         # calling GAM                         
@@ -183,8 +221,8 @@ class MLDSGAMCompare:
             return np.array(m_zero)
             
         
-        mzeros = np.zeros((len(svec), len(self.files)))
-        for i in range(len(self.files)):
+        mzeros = np.zeros((len(svec), nparts))
+        for i in range(nparts):
             mzeros[:,i] = predict(i)
         
         # saving to object self
@@ -192,5 +230,10 @@ class MLDSGAMCompare:
         self.scale_all = m_zero
         self.scales = mzeros
         self.anovares = anovares
-        
+        #
+        self.nparts = nparts
+        self.indicesR_start = s
+        self.indicesR_end   = e
+        self.nrows = nrows
+        self.nrowall = nrowall
     

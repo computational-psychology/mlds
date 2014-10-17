@@ -114,6 +114,7 @@ class TestMLDSClass(unittest.TestCase):
 #######################################################################
 class TestMLDSComparison(unittest.TestCase):
         
+
     def test_gam_run4(self):
         
         files = ['0.csv', '1.csv', '2.csv', '3.csv']
@@ -131,6 +132,24 @@ class TestMLDSComparison(unittest.TestCase):
         files = ['1.csv', '2.csv']
         gam = mlds_gam.MLDSGAMCompare(files)
         gam.run()
+        
+    def test_gam_run1(self):
+        
+        files = ['0.csv']
+        gam = mlds_gam.MLDSGAMCompare(files, dividedby=2)
+        gam.run()
+        
+    def test_gam_dividedby(self):
+        
+        with self.assertRaises(Exception):
+            mlds_gam.MLDSGAMCompare(['0.csv'])
+            
+    def test_gam_argument(self):
+        
+        with self.assertRaises(Exception):
+            mlds_gam.MLDSGAMCompare('0.csv')
+
+
         
 
     
