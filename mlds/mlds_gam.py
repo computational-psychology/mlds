@@ -31,7 +31,7 @@ class MLDSGAMCompare:
         
     """
     
-    def __init__(self, files, dividedby=None):
+    def __init__(self, files, dividedby=None, standardscale=False):
         
         self.files  = files
         assert(isinstance(files, list))
@@ -44,7 +44,7 @@ class MLDSGAMCompare:
         if len(files)==1:
             assert(dividedby > 1)
             
-        
+        self.standardscale = standardscale
         
         # GAM parameters
         self.k = 4  # smooth parameter
@@ -74,7 +74,7 @@ class MLDSGAMCompare:
             l.append('df%d' % i)
             
         d_all = r('dfall <- rbind(%s)' % ",".join(l))
-        stim = r('stim <- sort(unique(c(dfall$s1, dfall$s2, dfall$s3)))')    
+        stim = r('stim <- sort(unique(c(dfall$s1, dfall$s2, dfall$s3)))')  
         nrowall = list(r['nrow'](d_all))[0]
         assert(nrowall == sum(nrows))
         
@@ -96,7 +96,7 @@ class MLDSGAMCompare:
         print m_gam
         
         # 
-        svec = r('svec <- seq(0, 1, len = 100)')  # stimulus vector
+        svec = r('svec <- seq(min(stim), max(stim), len = 100)')  # stimulus vector
         nd = r('nd <-  list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), by.mat = matrix(1, nc = 3, nr = length(svec)))') # new data object
         
         m_pred = r('m.pred <- predict(m.gam, newdata = nd, type = "link")') # predict from m.gam object, using new data
@@ -211,7 +211,6 @@ class MLDSGAMCompare:
         print r['summary'](m_gam2)
         anovares = ranova(m_gam, m_gam2, test = "Chisq") 
         print anovares   # ANOVA correctly detect a better fit if separated.
-        print anovares[4]  # p- value
         
         def predict(i):
             r('m0.pred <- predict(m.gam2, newdata = nd%d, type = "link")' % i) # predict from m.gam object, using new data
@@ -225,6 +224,11 @@ class MLDSGAMCompare:
         for i in range(nparts):
             mzeros[:,i] = predict(i)
         
+        # normalizing to 0-1
+        if self.standardscale:
+            mzeros=mzeros/mzeros[-1,:]
+            m_zero = m_zero/m_zero[-1]
+            
         # saving to object self
         self.stim = svec
         self.scale_all = m_zero
