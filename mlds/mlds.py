@@ -476,7 +476,7 @@ def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1,
 
     if s.boot:
         if s.standardscale:
-            label = "%s, $\hat{\sigma}=%.3f \, [%.3f, \, %.3f]$" % (observer, s.sigmamns, s.sigmamns - s.sigmaci95, s.sigmamns + s.sigmaci95)
+            label = "%s, $\hat{\sigma}=%.3f \, [%.3f, \, %.3f]$" % (observer, s.sigmamns, s.sigmaci95[0], s.sigmaci95[1])
         else:
             label = "%s" % observer
             
