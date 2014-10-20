@@ -48,6 +48,7 @@ class MLDSGAMCompare:
         
         # GAM parameters
         self.k = 4  # smooth parameter
+        self.link = 'probit'
         
         # Saving results
         self.scales    = []
@@ -92,7 +93,7 @@ class MLDSGAMCompare:
         # gam call for all data together
         by_mat = r('by.mat <- matrix(c(1, -2, 1), nc = 3, nr = nrow(dfst), byrow = TRUE)')
         S_mat =  r('S.mat <- with(dfst, cbind(S1 = S1, S2 = S2, S3 = S3))')
-        m_gam =  r('m.gam <- gam(resp ~ s(S.mat, k = k, by = by.mat), family = binomial(probit), data = dfst)')
+        m_gam =  r('m.gam <- gam(resp ~ s(S.mat, k = k, by = by.mat), family = binomial(%s), data = dfst)' % self.link)
         print m_gam
         
         # 
@@ -157,7 +158,7 @@ class MLDSGAMCompare:
                                                         noblock % (s[2], e[2]),
                                                         block % (s[3], e[3])  ) )                                            
                                                         
-            gamcall = 'm.gam2 <- gam(resp ~ s(S.mat, k = k, by = sec0) + s(S.mat, k = k, by = sec1)+ s(S.mat, k = k, by = sec2) + s(S.mat, k = k, by = sec3), family = binomial(probit), data = dfst)'                                           
+            gamcall = 'm.gam2 <- gam(resp ~ s(S.mat, k = k, by = sec0) + s(S.mat, k = k, by = sec1)+ s(S.mat, k = k, by = sec2) + s(S.mat, k = k, by = sec3), family = binomial(%s), data = dfst)' % self.link                                          
                
             nd0 = r('nd0 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(1, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)), sec3 = matrix(0, nc = 3, nr = length(svec)))')
             nd1 = r('nd1 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(1, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)), sec3 = matrix(0, nc = 3, nr = length(svec)))')
@@ -178,7 +179,7 @@ class MLDSGAMCompare:
             sec2 = r('sec2 <- rbind( %s , %s, %s )' % ( noblock % (s[0], e[0]), 
                                                         noblock % (s[1], e[1]), 
                                                         block % (s[2], e[2])  ) )
-            gamcall = 'm.gam2 <- gam(resp ~ s(S.mat, k = k, by = sec0) + s(S.mat, k = k, by = sec1)+ s(S.mat, k = k, by = sec2), family = binomial(probit), data = dfst)'                                           
+            gamcall = 'm.gam2 <- gam(resp ~ s(S.mat, k = k, by = sec0) + s(S.mat, k = k, by = sec1)+ s(S.mat, k = k, by = sec2), family = binomial(%s), data = dfst)' % self.link
              
             nd0 = r('nd0 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(1, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)))')
             nd1 = r('nd1 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(1, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)))')
@@ -192,7 +193,7 @@ class MLDSGAMCompare:
             sec1 = r('sec1 <- rbind( %s , %s )' % ( noblock % (s[0], e[0]), 
                                                         block % (s[1], e[1])  ) )
                                                         
-            gamcall = 'm.gam2 <- gam(resp ~ s(S.mat, k = k, by = sec0) + s(S.mat, k = k, by = sec1), family = binomial(probit), data = dfst)'                                           
+            gamcall = 'm.gam2 <- gam(resp ~ s(S.mat, k = k, by = sec0) + s(S.mat, k = k, by = sec1), family = binomial(%s), data = dfst)' % self.link                                           
                 
             
             nd0 = r('nd0 <- list(S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(1, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)))')
