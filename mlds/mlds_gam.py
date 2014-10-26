@@ -135,8 +135,60 @@ class MLDSGAMCompare:
         elif len(self.files)>4:
             raise Exception('not implemented for more than 4 files (yet)')
         
-        
-        if nparts==4:
+        if nparts==6:
+            sec0 = r('sec0 <- rbind( %s , %s, %s, %s, %s, %s )' % ( block % (s[0], e[0]), 
+                                                        noblock % (s[1], e[1]), 
+                                                        noblock % (s[2], e[2]),
+                                                        noblock % (s[3], e[3]),
+                                                        noblock % (s[4], e[4]),
+                                                        noblock % (s[5], e[5])  ) )
+                                                        
+            sec1 = r('sec1<- rbind( %s , %s, %s, %s, %s, %s )' % ( noblock % (s[0], e[0]), 
+                                                        block % (s[1], e[1]), 
+                                                        noblock % (s[2], e[2]),
+                                                        noblock % (s[3], e[3]),
+                                                        noblock % (s[4], e[4]),
+                                                        noblock % (s[5], e[5])  ) )
+                                                        
+            sec2 = r('sec2 <- rbind( %s , %s, %s, %s, %s, %s )' % ( noblock % (s[0], e[0]), 
+                                                        noblock % (s[1], e[1]), 
+                                                        block % (s[2], e[2]),
+                                                        noblock % (s[3], e[3]),
+                                                        noblock % (s[4], e[4]),
+                                                        noblock % (s[5], e[5])  ) )
+                                                        
+            sec3 = r('sec3 <- rbind( %s , %s, %s, %s, %s, %s )' % ( noblock % (s[0], e[0]), 
+                                                        noblock % (s[1], e[1]), 
+                                                        noblock % (s[2], e[2]),
+                                                        block % (s[3], e[3]),
+                                                        noblock % (s[4], e[4]),
+                                                        noblock % (s[5], e[5])  ) )    
+                                                        
+            sec4 = r('sec4 <- rbind( %s , %s, %s, %s, %s, %s )' % ( noblock % (s[0], e[0]), 
+                                                        noblock % (s[1], e[1]), 
+                                                        noblock % (s[2], e[2]),
+                                                        noblock % (s[3], e[3]),
+                                                        block % (s[4], e[4]),
+                                                        noblock % (s[5], e[5])  ) )  
+                                                          
+            sec5 = r('sec5 <- rbind( %s , %s, %s, %s, %s, %s )' % ( noblock % (s[0], e[0]), 
+                                                        noblock % (s[1], e[1]), 
+                                                        noblock % (s[2], e[2]),
+                                                        noblock % (s[3], e[3]),
+                                                        noblock % (s[4], e[4]),
+                                                        block % (s[5], e[5])  ) )  
+                                                                                            
+                                                        
+            gamcall = 'm.gam2 <- gam(resp ~ s(S.mat, k = k, by = sec0) + s(S.mat, k = k, by = sec1)+ s(S.mat, k = k, by = sec2) + s(S.mat, k = k, by = sec3) + s(S.mat, k = k, by = sec4) + s(S.mat, k = k, by = sec5), family = binomial(%s), data = dfst)' % self.link                                          
+               
+            nd0 = r('nd0 <- list( S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(1, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)), sec3 = matrix(0, nc = 3, nr = length(svec)), sec4 = matrix(0, nc = 3, nr = length(svec)), sec5 = matrix(0, nc = 3, nr = length(svec)) )')
+            nd1 = r('nd1 <- list( S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(1, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)), sec3 = matrix(0, nc = 3, nr = length(svec)), sec4 = matrix(0, nc = 3, nr = length(svec)), sec5 = matrix(0, nc = 3, nr = length(svec)) )')
+            nd2 = r('nd2 <- list( S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)), sec2 = matrix(1, nc = 3, nr = length(svec)), sec3 = matrix(0, nc = 3, nr = length(svec)), sec4 = matrix(0, nc = 3, nr = length(svec)), sec5 = matrix(0, nc = 3, nr = length(svec)) )')
+            nd3 = r('nd3 <- list( S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)), sec3 = matrix(1, nc = 3, nr = length(svec)), sec4 = matrix(0, nc = 3, nr = length(svec)), sec5 = matrix(0, nc = 3, nr = length(svec)) )')
+            nd4 = r('nd4 <- list( S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)), sec3 = matrix(0, nc = 3, nr = length(svec)), sec4 = matrix(1, nc = 3, nr = length(svec)), sec5 = matrix(0, nc = 3, nr = length(svec)) )')
+            nd5 = r('nd5 <- list( S.mat = cbind(S1 = svec, S2 = 0, S3 = 0), sec0 = matrix(0, nc = 3, nr = length(svec)), sec1 = matrix(0, nc = 3, nr = length(svec)), sec2 = matrix(0, nc = 3, nr = length(svec)), sec3 = matrix(0, nc = 3, nr = length(svec)), sec4 = matrix(0, nc = 3, nr = length(svec)), sec5 = matrix(1, nc = 3, nr = length(svec)) )')
+                  
+        elif nparts==4:
             
             sec0 = r('sec0 <- rbind( %s , %s, %s, %s )' % ( block % (s[0], e[0]), 
                                                         noblock % (s[1], e[1]), 
