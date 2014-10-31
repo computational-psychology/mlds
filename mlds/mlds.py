@@ -146,9 +146,14 @@ class MLDSObject:
                "d.df <- read.table('%s', sep=" ", header=TRUE)\n" % self.filename,
                 "stim <- sort(unique(c(d.df$s1, d.df$s2, d.df$s3)))\n",
                 "results <- with(d.df, data.frame(resp = Response, S1= match(s1, stim), S2=match(s2, stim), S3=match(s3, stim)))\n",
-                "results <- as.mlbs.df(results, st=stim)\n",
-                "obs.mlds <- mlds(results, lnk=%s.2asym(g = %f, lam = %f))\n" % (self.linktype, self.linkgam, self.linklam) ]
-                 
+                "results <- as.mlbs.df(results, st=stim)\n"]
+               
+        # still to be debug is the fact that passing a link function with gamma = lamda = 0 gives different results as passing the link function as a word.
+        if self.linkgam==0.0 and self.linklam==0:
+            seq.append( "obs.mlds <- mlds(results, lnk='%s')\n" % self.linktype)
+        else:  
+            seq.append( "obs.mlds <- mlds(results, lnk=%s.2asym(g = %f, lam = %f))\n" % (self.linktype, self.linkgam, self.linklam) )
+        
         # writing perceptual scale calculation
         if self.standardscale:
             seq.extend(["ll<- length(obs.mlds$pscale)\n",
