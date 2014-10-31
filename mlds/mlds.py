@@ -425,7 +425,11 @@ class MLDSObject:
     def load(self, force_refit=False):
         
         self.getRdatafilename( force_refit)
-               
+        
+        if not os.path.isfile( self.Rdatafile ):
+            self.saveRobj = True
+            self.run()
+            
         # scale and bootstrap 
         self.readobjectresults()
         
