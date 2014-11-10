@@ -14,6 +14,7 @@ import itertools
 import random
 import subprocess
 import uuid
+import multiprocessing
 
 
 class MLDSObject:
@@ -100,9 +101,13 @@ class MLDSObject:
         self.returncode=-1
         
         # parallel execution of bootsrap
-        self.parallel= False
-        self.workers = ['"localhost"', '"localhost"']
-        self.master = '"localhost"'
+        ncpus = multiprocessing.cpu_count()
+        if ncpus==1:
+            self.parallel= False
+        else:
+            self.parallel = True
+            self.workers = ['"localhost"']* ncpus
+            self.master = '"localhost"'
         
         # initialize commands for execution in R
         self.initcommands()
