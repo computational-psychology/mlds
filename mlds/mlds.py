@@ -131,15 +131,19 @@ class MLDSObject:
     
     def getRdatafilename(self, force_refit=False):
         rootname = self.filename.split('.')[0]
+        if self.standardscale:
+            tag = '_norm_'
+        else:
+            tag = '_unnorm_'
         
         if self.linkgam==0.0 and self.linklam==0.0:
-            self.Rdatafile = rootname + '_' + self.linktype + '.MLDS'
+            self.Rdatafile = rootname + tag + self.linktype + '.MLDS'
             
         else:
-            self.Rdatafile = rootname + '_' + self.linktype + '_refit' + '.MLDS'
+            self.Rdatafile = rootname + tag + self.linktype + '_refit' + '.MLDS'
             
         if force_refit:
-            self.Rdatafile = rootname + '_' + self.linktype + '_refit' + '.MLDS'
+            self.Rdatafile = rootname + tag + self.linktype + '_refit' + '.MLDS'
        
     ###################################################################################################  
     def initcommands(self):
