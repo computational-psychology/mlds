@@ -217,7 +217,7 @@ class MLDSObject:
 
         # saving R objects into datafile
         if self.boot and self.saveRobj:
-            seq.append("save(results, obs.mlds, obs.bt, obs.mns, obs.low, obs.high, file='%s')\n" % self.Rdatafile)
+            seq.append("save(results, obs.mlds, obs.bt, obs.mns, obs.low, obs.high, obs.sd, file='%s')\n" % self.Rdatafile)
         elif self.saveRobj:
             seq.append("save(results, obs.mlds, file='%s')\n" % self.Rdatafile)
         else:
@@ -480,10 +480,12 @@ class MLDSObject:
             obsmns  = robjects.r['obs.mns']
             obslow  = robjects.r['obs.low']
             obshigh = robjects.r['obs.high']
-            
+            obssd   = robjects.r['obs.sd']
+
             self.mns = np.array(obsmns)[:-1]
             self.ci95 =  np.vstack( (obslow[:-1], obshigh[:-1]))
-            
+            self.sd = np.array(obssd)[:-1]
+
             self.sigmamns = np.array(obsmns )[-1]
             self.sigmaci95= np.array([obslow[-1], obshigh[-1]])
             self.status=2
