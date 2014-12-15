@@ -86,7 +86,7 @@ def generate_triads(stim):
     for t in range(len(allTrials)):
         if topbot[t]:
             allTrials[t] = [ allTrials[t][2], allTrials[t][1], allTrials[t][0] ]
-            # careful here to make non-overlapping triads, at inverting order 1 must stay in the middle.
+            # careful here to make non-overlapping triads.. when inverting, the stim 1 must stay in the middle.
      
     # create list of stimulus triads
     triads = [stim[t]   for t in allTrials]
