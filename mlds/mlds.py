@@ -77,7 +77,7 @@ class MLDSObject:
         
         seq1 = ["library(MLDS)\n", 
                "df <- read.table('%s', sep=" ", header=TRUE)\n" % self.filename,
-                "stim <- seq(from=0, to=60, by=5)\n",  # this must be changed to accomodate other stimulus configurations
+                "stim <- sort(unique(df$s1))\n",
                 "results <- data.frame(resp = as.integer(df$Response), S1= df$i1, S2=df$i2, S3=df$i3)\n",
                 "attr(results, \"stimulus\") <- stim\n",
                 "attr(results, \"invord\") <- as.logical( df$invord )\n",
@@ -203,7 +203,7 @@ def generate_quadruples(stim):
     Output: quads:  list of all possible non-overlapping quadruples (stimulus values)
             indx:    (idem)   but indices values
     
-    Ported from routines runQuadExperiment.R   from R package "MLDS"
+    Ported from routine "runQuadExperiment.R" from the R package "MLDS"
     
     Reference: 
         Knoblauch, K. and Maloney, L. T. (2008) MLDS: Maximum likelihood difference scaling in R.
@@ -246,7 +246,7 @@ def generate_triads(stim):
             indx:    (idem)   but indices values
 
 
-    Ported from routines runTriadExperiment.R   from R package "MLDS"
+    Ported from routine "runTriadExperiment.R" from the R package "MLDS"
     
     Reference: 
         Knoblauch, K. and Maloney, L. T. (2008) MLDS: Maximum likelihood difference scaling in R.
