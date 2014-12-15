@@ -377,11 +377,16 @@ class MLDSObject:
         if self.verbose:
             print out                    
         
-        if self.returncode==0:
+        print self.returncode
+        
+        try:
             self.readgamlam( gamlamfile )
-        else:
+        except:
+            print "Error"
+            print out
             print err
             raise RuntimeError("Error in execution within R (see error output above)")
+            
             
     ##########################################################################            
     def readgamlam(self, gamlamfile):
