@@ -95,6 +95,8 @@ class MLDSObject:
         self.sd = None
         self.sigmamns = None
         self.sigmaci95 = None
+        self.scalesbt = None
+        self.sigmabt = None
 
         # diagnostic measures
         self.AIC = None
@@ -481,6 +483,7 @@ class MLDSObject:
             obslow  = robjects.r['obs.low']
             obshigh = robjects.r['obs.high']
             obssd   = robjects.r['obs.sd']
+            bt = robjects.r['obs.bt'][0]
 
             self.mns = np.array(obsmns)[:-1]
             self.ci95 =  np.vstack( (obslow[:-1], obshigh[:-1]))
@@ -488,6 +491,13 @@ class MLDSObject:
 
             self.sigmamns = np.array(obsmns )[-1]
             self.sigmaci95= np.array([obslow[-1], obshigh[-1]])
+            
+            arr = np.array(bt)[:-1,:]
+            anchor = np.zeros((1, arr.shape[1]))
+            
+            self.scalesbt = np.vstack((anchor, arr))
+            self.sigmabt = np.array(bt)[-1,:]
+             
             self.status=2
 
 
