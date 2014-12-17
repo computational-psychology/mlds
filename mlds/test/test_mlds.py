@@ -59,23 +59,16 @@ class TestMLDSClass(unittest.TestCase):
         np.testing.assert_almost_equal(obs.scale, scale, decimal= d)
         
     
-    @unittest.skip("skipping bootstrap, saving time")
+    #@unittest.skip("skipping bootstrap, saving time")
     def test_bootstrap(self):
         obs = mlds.MLDSObject('test.csv', boot=True, save=False)
-        obs.parallel=True
-        obs.master= '"localhost"'
-        obs.workers= ['"localhost"']*4
-        
         obs.run()
         
         self.compare(obs)
     
-    @unittest.skip("skipping bootstrap, saving time")
+    #@unittest.skip("skipping bootstrap, saving time")
     def test_bootstrap_correctedCI(self):
         obs = mlds.MLDSObject('test.csv', boot=True, save=False)
-        obs.parallel=True
-        obs.master= '"localhost"'
-        obs.workers= ['"localhost"']*4
         obs.correctedCI=True
         obs.run()
         

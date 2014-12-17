@@ -8,7 +8,7 @@ rev. Aug 2014: diagnostics added, saving to R datafile.
 """
 
 import numpy as np
-import os
+import os, sys
 import csv
 import itertools
 import random
@@ -182,7 +182,7 @@ class MLDSObject:
         if self.boot:
             if self.parallel:
                 seq.extend(["library(snow)\n",
-                         "source('~/git/slantfromtex/mlds/pboot.mlds.R')\n",
+                         "source(paste('%s', '/pboot.mlds.R', sep=''))\n" % os.path.dirname(sys.modules[__name__].__file__),
                          "workers <- c(%s)\n" % ",".join(self.workers),
                          "master <- %s\n" % self.master,
                          "obs.bt <- pboot.mlds(obs.mlds, 10000, workers = workers, master=master )\n"])
@@ -616,113 +616,4 @@ def generate_triads(stim):
 
 
 ###############################################################################
-############################# Testing routine ##################################
-
-if __name__ == "__main__":
-
-    import matplotlib as mpl
-    mpl.use('Agg')
-    import matplotlib.pyplot as plt
-    import time
-
-    simplecases = True
-    bootstrap = False
-    benchmark = False
-
-
-    ## running a test example
-    # 'test.csv' was created simulating a power function, with exponent=2,
-    # 5 blocks and noise parameter sigma=0.1
-
-    if simplecases:
-        # Case 1: Simple scale, unconstrained
-        obs = MLDSObject('test/test.csv', boot=False, standardscale=False)
-        obs.run()   # runs Mlds in R
-
-        fig = plt.figure()
-        plt.plot(obs.stim, obs.scale)
-        plt.xlabel('Stimulus')
-        plt.ylabel('Difference scale')
-        plt.title('$\sigma = %.2f$' % obs.sigma)
-        #plt.show()
-        fig.savefig('Fig1.png')
-
-        # Case 2: Standard scale
-        obs = MLDSObject('test.csv', boot=False, standardscale=True)
-        obs.run()
-
-        fig = plt.figure()
-        plt.plot(obs.stim, obs.scale)
-        plt.xlabel('Stimulus')
-        plt.ylabel('Difference scale')
-        plt.title('$\sigma = %.2f$' % obs.sigma)
-        #plt.show()
-        fig.savefig('Fig2.png')
-
-    if bootstrap:
-
-        # Case 3: Standard scale and bootstrap
-        obs = MLDSObject('test.csv', boot=True, standardscale=True)
-        obs.run()
-
-        fig = plt.figure()
-        plt.errorbar(obs.stim, obs.mns, yerr=obs.ci95)
-        plt.xlabel('Stimulus')
-        plt.ylabel('Difference scale')
-        plt.title('$\sigma = %.2f \pm %.2f$' % (obs.sigmamns, obs.sigmaci95))
-        plt.xlim(0, 1.05)
-        plt.show()
-        fig.savefig('Fig3.png')
-
-        # Case 4: Unconstrained scale and bootstrap
-        obs = MLDSObject('test.csv', boot=True, standardscale=False)
-        obs.run()
-
-        fig = plt.figure()
-        plt.errorbar(obs.stim, obs.mns, yerr=obs.ci95)
-        plt.xlabel('Stimulus')
-        plt.ylabel('Difference scale')
-        plt.title('$\sigma = %.2f \pm %.2f$' % (obs.sigmamns, obs.sigmaci95))
-        plt.xlim(0, 1.05)
-        plt.show()
-        fig.savefig('Fig4.png')
-
-
-    # Benchmark parallelization
-    if benchmark:
-
-        obs = MLDSObject( 'test.csv', boot=True, standardscale=True)
-
-        obs.parallel = False
-
-        startime = time.time()
-        obs.run()
-        print 'without parallel: %d sec ' % (time.time() - startime)
-
-
-        # parallel but in duo core computer
-        obs.parallel = True
-        startime = time.time()
-        obs.run()
-        print 'with parallel and 2 CPUs: %d sec ' % (time.time() - startime)
-
-
-        # parallel but in quad computer
-        obs.workers=['"localhost"'] *4                          
-        
-        startime=time.time()
-        obs.run()
-        print 'with parallel and 4 CPUs: %d sec' % (time.time() - startime)
-        
-        
-        # in the lab with 8 CPUS
-        obs.workers=['"localhost"', '"localhost"', '"localhost"', '"localhost"',  '"130.149.57.124"' , '"130.149.57.124"', '"130.149.57.124"', '"130.149.57.124"']
-        obs.master = '"130.149.57.105"'            
-        
-        startime=time.time()
-        obs.run()
-        print 'with parallel and 8 CPUs: %d sec' % (time.time() - startime)
-
-
-
 #EOF
