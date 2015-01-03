@@ -219,7 +219,7 @@ class MLDSObject:
 
         # saving R objects into datafile
         if self.boot and self.saveRobj:
-            seq.append("save(results, obs.mlds, obs.bt, obs.mns, obs.low, obs.high, obs.sd, file='%s')\n" % self.Rdatafile)
+            seq.append("save(results, obs.mlds, obs.bt, obs.mns, obs.low, obs.high, obs.sd, samples, file='%s')\n" % self.Rdatafile)
         elif self.saveRobj:
             seq.append("save(results, obs.mlds, file='%s')\n" % self.Rdatafile)
         else:
@@ -302,7 +302,7 @@ class MLDSObject:
         seqdiag = ["library(MLDS)\n",
         "load('%s')\n" % self.Rdatafile,
         "library(snow)\n",
-        "source('~/git/slantfromtex/mlds/pbinom.diagnostics.R')\n",
+        "source(paste('%s', '/pbinom.diagnostics.R', sep=''))\n" % os.path.dirname(sys.modules[__name__].__file__),
         "workers <- c(%s)\n" % ",".join(self.workers),
         "master <- %s\n" % self.master,
         "obs.diag.prob <- pbinom.diagnostics (obs.mlds, 10000, workers=workers, master=master)\n"
@@ -483,7 +483,7 @@ class MLDSObject:
             obslow  = robjects.r['obs.low']
             obshigh = robjects.r['obs.high']
             obssd   = robjects.r['obs.sd']
-            bt = robjects.r['obs.bt'][0]
+            bt = robjects.r['samples']
 
             self.mns = np.array(obsmns)[:-1]
             self.ci95 =  np.vstack( (obslow[:-1], obshigh[:-1]))
