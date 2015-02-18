@@ -1,10 +1,11 @@
-# -*- coding: utf-8 -*-
+    # -*- coding: utf-8 -*-
 """
 Utilities for MLDS estimation, interfacing with R.
 
 @author: G. Aguilar, Nov 2013, rev. Apr 2014.
 rev. Aug 2014: diagnostics added, saving to R datafile.
-
+rev. Jan 2015: bootstrap samples can be accessed.
+rev. Feb 2015: adds plot diagnostics, as in R.
 """
 
 import numpy as np
@@ -294,42 +295,53 @@ class MLDSObject:
         if not self.keepfiles:
             os.remove(self.mldsfile)
 
-    ####################################################################
+    ###################################################################################################
     def rundiagnostics(self):
+        
+        import rpy2.robjects as robjects
 
-        self.getRdatafilename()
-
-        seqdiag = ["library(MLDS)\n",
-        "load('%s')\n" % self.Rdatafile,
-        "library(snow)\n",
-        "source(paste('%s', '/pbinom.diagnostics.R', sep=''))\n" % os.path.dirname(sys.modules[__name__].__file__),
-        "workers <- c(%s)\n" % ",".join(self.workers),
-        "master <- %s\n" % self.master,
-        "obs.diag.prob <- pbinom.diagnostics (obs.mlds, 10000, workers=workers, master=master)\n"
-        "save(results, obs.mlds, obs.bt, obs.mns, obs.low, obs.high, obs.diag.prob, file='%s')\n" % self.Rdatafile ]
-
-        # run MLDS analysis in R
-        if self.verbose:
-            print "executing in R..."
-
-        proc = subprocess.Popen(["R", "--no-save"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        for line in seqdiag:
-            proc.stdin.write(line)
-        (out, err) = proc.communicate()
-
-        self.returncode = proc.returncode
-
-        if self.verbose:
-            print out
-
-        if self.returncode == 0:
+        ### loading file
+        objs = robjects.r['load']("%s" % self.Rdatafile)
+        objl = list(objs)
+        
+        if 'obs.diag.prob' in objl:
             self.readdiags()
+            
         else:
-            print err
-            raise RuntimeError("Error in execution within R (see error output above)")
+        
+            self.getRdatafilename()
+
+            seqdiag = ["library(MLDS)\n",
+            "load('%s')\n" % self.Rdatafile,
+            "library(snow)\n",
+            "source(paste('%s', '/pbinom.diagnostics.R', sep=''))\n" % os.path.dirname(sys.modules[__name__].__file__),
+            "workers <- c(%s)\n" % ",".join(self.workers),
+            "master <- %s\n" % self.master,
+            "obs.diag.prob <- pbinom.diagnostics (obs.mlds, 10000, workers=workers, master=master)\n"
+            "save(results, obs.mlds, obs.bt, obs.mns, obs.low, obs.high, obs.sd, samples, obs.diag.prob, file='%s')\n" % self.Rdatafile ]
+
+            # run MLDS analysis in R
+            if self.verbose:
+                print "executing in R..."
+
+            proc = subprocess.Popen(["R", "--no-save"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            for line in seqdiag:
+                proc.stdin.write(line)
+            (out, err) = proc.communicate()
+
+            self.returncode = proc.returncode
+
+            if self.verbose:
+                print out
+
+            if self.returncode == 0:
+                self.readdiags()
+            else:
+                print err
+                raise RuntimeError("Error in execution within R (see error output above)")
 
 
-    #####
+    ###################################################################################################
     def readdiags(self):
 
         import rpy2.robjects as robjects
@@ -357,13 +369,32 @@ class MLDSObject:
 
         # prob
         if 'obs.diag.prob' in objl:
-            diagprob = robjects.r['obs.diag.prob']
-            self.prob = list(diagprob[4])[0]
+            self.diagnostics = robjects.r['obs.diag.prob']
+            self.prob = list(self.diagnostics[4])[0]
+            
         else:
             print "bootstrap diagnostics are not yet calculated"
 
+    ###################################################################################################
+    def plotdiags(self, width=8, height=6):
 
-    ##########################################################################
+        import rpy2.robjects as robjects
+
+        objs = robjects.r['load']("%s" % self.Rdatafile)
+        objl = list(objs)
+
+        if 'obs.diag.prob' in objl:
+            diagprob = robjects.r['obs.diag.prob']
+
+            robjects.r('dev.new(width=%f, height=%f)' % (width, height))
+            robjects.r('plot')(diagprob)
+            
+    ###################################################################################################
+    def closeRplot(self):
+        import rpy2.robjects as robjects
+        robjects.r('dev.off()')
+
+    ###################################################################################################
     def estgamlam(self, writetofile=False):
 
         gamlamfile = str(uuid.uuid4()) + '.csv'
@@ -491,13 +522,13 @@ class MLDSObject:
 
             self.sigmamns = np.array(obsmns )[-1]
             self.sigmaci95= np.array([obslow[-1], obshigh[-1]])
-            
+
             arr = np.array(bt)[:-1,:]
             anchor = np.zeros((1, arr.shape[1]))
-            
+
             self.scalesbt = np.vstack((anchor, arr))
             self.sigmabt = np.array(bt)[-1,:]
-             
+
             self.status=2
 
 
