@@ -103,6 +103,7 @@ class MLDSObject:
         self.AIC = None
         self.DAF = None
         self.prob = None
+        self.pmc = None
 
 
         self.seq = []  # sequence of commands in R
@@ -297,18 +298,18 @@ class MLDSObject:
 
     ###################################################################################################
     def rundiagnostics(self):
-        
+
         import rpy2.robjects as robjects
 
         ### loading file
         objs = robjects.r['load']("%s" % self.Rdatafile)
         objl = list(objs)
-        
+
         if 'obs.diag.prob' in objl:
             self.readdiags()
-            
+
         else:
-        
+
             self.getRdatafilename()
 
             seqdiag = ["library(MLDS)\n",
@@ -367,11 +368,14 @@ class MLDSObject:
 
         self.DAF = list(daf(obsmlds))[0]
 
-        # prob
+        ### pmc
+        self.pmc = robjects.r['pmc'](obsmlds)[0]
+
+        #### prob
         if 'obs.diag.prob' in objl:
             self.diagnostics = robjects.r['obs.diag.prob']
             self.prob = list(self.diagnostics[4])[0]
-            
+
         else:
             print "bootstrap diagnostics are not yet calculated"
 
@@ -385,10 +389,8 @@ class MLDSObject:
 
         if 'obs.diag.prob' in objl:
             diagprob = robjects.r['obs.diag.prob']
+            robjects.r('plot')(diagprob, pch=".", cex=1)
 
-            robjects.r('dev.new(width=%f, height=%f)' % (width, height))
-            robjects.r('plot')(diagprob)
-            
     ###################################################################################################
     def closeRplot(self):
         import rpy2.robjects as robjects
