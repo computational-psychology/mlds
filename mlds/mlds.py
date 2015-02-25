@@ -80,6 +80,7 @@ class MLDSObject:
         self.linklam = 0.0
 
         self.filename = filename  # csv datafile containing observer responses
+        self.rootname = self.filename.split('.')[0]
 
         self.getRdatafilename()
 
@@ -104,8 +105,9 @@ class MLDSObject:
         self.DAF = None
         self.prob = None
         self.pmc = None
+        self.residuals = None
 
-
+        ##
         self.seq = []  # sequence of commands in R
         self.mldsfile = ''
         self.returncode = -1
@@ -139,20 +141,19 @@ class MLDSObject:
                 print "corrected CIs"
 
     def getRdatafilename(self, force_refit=False):
-        rootname = self.filename.split('.')[0]
+
         if self.standardscale:
             tag = '_norm_'
         else:
             tag = '_unnorm_'
 
         if self.linkgam == 0.0 and self.linklam == 0.0:
-            self.Rdatafile = rootname + tag + self.linktype + '.MLDS'
-
+            self.Rdatafile = self.rootname + tag + self.linktype + '.MLDS'
         else:
-            self.Rdatafile = rootname + tag + self.linktype + '_refit' + '.MLDS'
+            self.Rdatafile = self.rootname + tag + self.linktype + '_refit' + '.MLDS'
 
         if force_refit:
-            self.Rdatafile = rootname + tag + self.linktype + '_refit' + '.MLDS'
+            self.Rdatafile = self.rootname + tag + self.linktype + '_refit' + '.MLDS'
 
     ###################################################################################################
     def initcommands(self):
@@ -346,6 +347,10 @@ class MLDSObject:
     def readdiags(self):
 
         import rpy2.robjects as robjects
+        from rpy2.robjects.packages import importr
+
+        ### loading library
+        rmlds = importr("MLDS")
 
         ### loading file
         objs = robjects.r['load']("%s" % self.Rdatafile)
@@ -371,6 +376,10 @@ class MLDSObject:
         ### pmc
         self.pmc = robjects.r['pmc'](obsmlds)[0]
 
+        ### residuals
+        self.residuals = np.array(robjects.r['residuals'](obsmlds[5]))
+
+
         #### prob
         if 'obs.diag.prob' in objl:
             self.diagnostics = robjects.r['obs.diag.prob']
@@ -395,6 +404,31 @@ class MLDSObject:
     def closeRplot(self):
         import rpy2.robjects as robjects
         robjects.r('dev.off()')
+
+
+    ###################################################################################################
+    def setsubset(self, cuts):
+        if self.residuals==None:
+            print "subset aborted: you should run diagnostics first"
+            return
+        else:
+            invalid = np.logical_or(self.residuals < cuts[0], self.residuals > cuts[1])
+
+        import pandas as pd
+
+        orig = pd.read_csv( self.filename , sep=" ")
+        dest = orig[np.logical_not(invalid)]
+
+        rootname = self.filename.split('.')[0]
+        fname = "%s_subset.csv" % rootname
+        dest.to_csv(fname,  sep=" ")
+
+        self.filename = fname
+        self.rootname = self.filename.split('.')[0]
+        print "subset created, new filename: %s" % fname
+        print "you must now run() or load() to override"
+
+
 
     ###################################################################################################
     def estgamlam(self, writetofile=False):
