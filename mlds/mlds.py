@@ -421,12 +421,12 @@ class MLDSObject:
 
         rootname = self.filename.split('.')[0]
         fname = "%s_subset.csv" % rootname
-        dest.to_csv(fname,  sep=" ")
+        dest.to_csv(fname,  sep=' ', index=False)
 
         self.filename = fname
         self.rootname = self.filename.split('.')[0]
         print "subset created, new filename: %s" % fname
-        print "you must now run() or load() to override"
+        print "you must now run() or load() to update results"
 
 
 
