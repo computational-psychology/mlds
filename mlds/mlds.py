@@ -389,16 +389,50 @@ class MLDSObject:
             print "bootstrap diagnostics are not yet calculated"
 
     ###################################################################################################
-    def plotdiags(self, width=8, height=6):
+    def plotdiags(self, width=10, height=5):
 
-        import rpy2.robjects as robjects
+        if self.diagnostics is not None:
 
-        objs = robjects.r['load']("%s" % self.Rdatafile)
-        objl = list(objs)
+            import matplotlib.pyplot as plt
+            import matplotlib.ticker as ticker
+            
 
-        if 'obs.diag.prob' in objl:
-            diagprob = robjects.r['obs.diag.prob']
-            robjects.r('plot')(diagprob, pch=".", cex=1)
+            NumRuns = np.array(self.diagnostics[0])
+            resid = np.array(self.diagnostics[1])
+            Obs_resid = np.array(self.diagnostics[2])
+            ObsRuns = np.array(self.diagnostics[3])[0]
+
+            nsim = resid.shape[0]
+            n = resid.shape[1]
+            alpha = 0.025
+            cdfx = (np.arange(1, n + 1, 1) - 0.5) / n
+            id1 = int(alpha * nsim)
+            id2 = int((1 - alpha) * nsim)
+
+            fig = plt.figure(figsize=(width, height))
+            ax = plt.subplot(1, 2, 1)
+            ax.set_xlabel("Deviance residual")
+            ax.set_ylabel("Cumulative density function")
+            ax.plot(np.sort(Obs_resid), cdfx, 'o', markersize=1,
+                     markeredgecolor='k', markerfacecolor='k')
+            ax.plot(resid[id1, :], cdfx, '-', color='#4C72B0', linewidth=1)
+            ax.plot(resid[id2, :], cdfx, '-', color='#4C72B0', linewidth=1)
+            ax.spines['right'].set_visible(False)
+            ax.spines['top'].set_visible(False)
+            ax.tick_params(right=False, top=False)
+            plt.locator_params(axis = 'y', nbins=4)
+
+            ax = plt.subplot(1, 2, 2)
+            ax.hist(NumRuns, bins=25, normed=True)
+            ax.axvline(ObsRuns, color='k', linewidth=1)
+            ax.set_xlabel("Number of Runs")
+            ax.set_ylabel("Frequency")
+            ax.spines['right'].set_visible(False)
+            ax.spines['top'].set_visible(False)
+            ax.tick_params(right=False, top=False)
+            plt.locator_params(axis = 'y', nbins=3)
+            
+            return fig
 
     ###################################################################################################
     def closeRplot(self):
