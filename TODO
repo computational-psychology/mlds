@@ -1,0 +1,14 @@
+--- TODO ----
+
+- check that minimum requirements are installed (R with MLDS package)
+
+- generate instructions for the use of multithread 
+(with snow package in R)
+
+- make implementation cleaner, use rpy2 instead of passing
+R commands with subprocess.
+
+
+- eventually implement the class so it does not depend on R. 
+For that, one would have to use a GLM solver in python (statmodels?)
+

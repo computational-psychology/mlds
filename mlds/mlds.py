@@ -18,6 +18,12 @@ import uuid
 import multiprocessing
 
 
+def tofloat(s):
+    try:
+        return round(float(s), 5)
+    except ValueError:
+        return np.nan
+
 class MLDSObject:
     """
     MLDS Object allows the quick analysis of perceptual scales from triad
@@ -434,11 +440,10 @@ class MLDSObject:
             
             return fig
 
-    ###################################################################################################
-    def closeRplot(self):
-        import rpy2.robjects as robjects
-        robjects.r('dev.off()')
-
+#   ###################################################################################################
+#    def closeRplot(self):
+#        import rpy2.robjects as robjects
+#        robjects.r('dev.off()')
 
     ###################################################################################################
     def setsubset(self, cuts):
@@ -508,12 +513,6 @@ class MLDSObject:
 
     ##########################################################################
     def readgamlam(self, gamlamfile):
-
-        def tofloat(s):
-            try:
-                return round(float(s), 5)
-            except ValueError:
-                return np.nan
 
         data = []
         csvfile = open(gamlamfile, 'rb')
@@ -632,6 +631,9 @@ def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1,
             label = "%s" % observer
 
         plt.plot(s.stim, s.scale, color= color, label=label, linewidth=linewidth, **kargs)
+
+
+
 
 ###############################################################################
 ###############################################################################
