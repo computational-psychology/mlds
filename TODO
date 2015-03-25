@@ -8,6 +8,7 @@
 - make implementation cleaner, use rpy2 instead of passing
 R commands with subprocess.
 
+- improve documentation, add docstrings to all functions
 
 - eventually implement the class so it does not depend on R. 
 For that, one would have to use a GLM solver in python (statmodels?)
