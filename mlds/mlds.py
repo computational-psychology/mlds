@@ -633,6 +633,93 @@ def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1,
         plt.plot(s.stim, s.scale, color= color, label=label, linewidth=linewidth, **kargs)
 
 
+###############################################################################
+###############################################################################
+########################## Simulation utilities   #############################
+
+def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff'):
+    """ Simulate an observer responding to a triads experiment according
+    to a given sensory representation function
+
+    Inputs
+    ----------
+
+    sensoryrep: callable
+                function that returns the value of the sensory representation
+                psi at stimulus level x.
+                Example: sensoryrep = lambda x: x**2
+
+    stim : vector
+            vector of stimulus levels
+
+    nblocks: int. Default : 1
+            number of blocks to be simulated
+
+    decisionrule:  string. Default: 'diff'
+            'diff' or 'absdiff'
+
+    Output
+    ----------
+
+    f: string
+        filename csv containing data of simulated experiment
+
+    """
+
+    # Simulation triads experiment
+    triads, indxt, order = generate_triads(stim)
+
+    # where to save the results
+    filename = str(uuid.uuid4()) + '.csv'
+    rfl = open(filename, 'wb')
+    writer = csv.writer(rfl, delimiter=' ')
+    writer.writerow(['Trial', 'Response', 's1', 's2', 's3', 'invord', 'i1', 'i2', 'i3'])
+
+    # going through every trial
+    for b in range(nblocks):
+        for t in range(len(triads)):
+
+            # slants of current triad
+            if order[t] == 1:
+                s1 = triads[t][2]
+                s2 = triads[t][1]
+                s3 = triads[t][0]
+            else:
+                s1 = triads[t][0]
+                s2 = triads[t][1]
+                s3 = triads[t][2]
+
+            # sensory representation variables
+            f1 = sensoryrep(s1)
+            f2 = sensoryrep(s2)
+            f2b = sensoryrep(s2)
+            f3 = sensoryrep(s3)
+
+            # decision variable
+            if decisionrule == 'diff':
+                delta = (f3 - f2b) - (f2-f1)
+            elif decisionrule == 'absdiff':
+                delta = abs(f3 - f2b) - abs(f2 - f1)
+            else:
+                raise ValueError('wrong decision rule "%s"' % decisionrule)
+
+            # binary response
+            if delta > 0:
+                response = 1
+            elif delta < 0:
+                response = 0
+            else:
+                response = np.nan
+
+            if order[t] == 1:
+                response = int(not response)
+
+            # saves response
+            writer.writerow([t, response, "%.2f" % triads[t][0], "%.2f" % triads[t][1], "%.2f" % triads[t][2], order[t], indxt[t][0]+1, indxt[t][1]+1, indxt[t][2]+1])
+
+    rfl.close()
+
+    return filename
 
 
 ###############################################################################
