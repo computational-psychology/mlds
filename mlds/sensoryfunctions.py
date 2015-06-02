@@ -21,9 +21,46 @@ class PowerSensoryFunc:
 
     def __init__(self):
 
+        # power function
         self.exponent = 3  # default value
+        self.a = 1
+        self.c = 0
 
-        self.func = lambda x: x**self.exponent  # power function
+        self.func = lambda x: self.a*x**self.exponent + self.c
+
+        # definition of relationship of noise with sensory rep value
+        # if sigmamax == sigmamin, the noise is constant
+        # otherwise a linear relationship can be defined
+        # i.e. linearly increasing or decreasing noise with sensory value
+        self.sigmamax = 0.3  # default values
+        self.sigmamin = 0.1
+
+        # noise function
+        self.sigmafunc = lambda x: (self.sigmamax - self.sigmamin) * self.func(x) + self.sigmamin
+
+    def __call__(self, x):
+        """  returns a sample at stimulus intensity x  """
+
+        v = random.gauss(self.func(x), self.sigmafunc(x))
+        return v
+
+
+class QuadraticSensoryFunc:
+    """
+    Generic quatratic sensory function with gaussian noise. Noise can be
+    independent or to depend on the sensory function value in a linear fashion.
+    Not vectorial function.. to be called for a single value
+
+    """
+
+    def __init__(self):
+
+        # power function
+        self.a = 2  # default value
+        self.b = 2
+        self.c = 0
+
+        self.func = lambda x: self.a*x**2 + self.b*x + self.c
 
         # definition of relationship of noise with sensory rep value
         # if sigmamax == sigmamin, the noise is constant
@@ -57,7 +94,7 @@ class Cue2DSensoryFunc:
 
     """
 
-    def __init__(self, cuefilename, normalize = True):
+    def __init__(self, cuefilename, normalize=True):
 
         # load cue data
         try:
@@ -76,7 +113,7 @@ class Cue2DSensoryFunc:
             self.rawcue[1, :] = a * self.rawcue[1, :] + b
 
         # defines cue function, as a linear interpolation object
-        self.func = interpolate.interp1d(self.rawcue[0,:], self.rawcue[1,:], kind='linear')
+        self.func = interpolate.interp1d(self.rawcue[0, :], self.rawcue[1, :], kind='linear')
 
         # define default noise parameters
         self.sigmamax = 0.3  # default values
