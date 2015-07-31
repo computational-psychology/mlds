@@ -401,7 +401,7 @@ class MLDSObject:
 
             import matplotlib.pyplot as plt
             import matplotlib.ticker as ticker
-            
+
 
             NumRuns = np.array(self.diagnostics[0])
             resid = np.array(self.diagnostics[1])
@@ -437,7 +437,7 @@ class MLDSObject:
             ax.spines['top'].set_visible(False)
             ax.tick_params(right=False, top=False)
             plt.locator_params(axis = 'y', nbins=3)
-            
+
             return fig
 
 #   ###################################################################################################
@@ -637,7 +637,7 @@ def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1,
 ###############################################################################
 ########################## Simulation utilities   #############################
 
-def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff'):
+def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff', noisetype='sensory', sigma=0.0):
     """ Simulate an observer responding to a triads experiment according
     to a given sensory representation function
 
@@ -655,8 +655,15 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff'):
     nblocks: int. Default : 1
             number of blocks to be simulated
 
+    noisetype: string. Default: 'sensory'
+                'sensory' or 'decision', where the gaussian noise originates.
+                in case of decision, 'sigma' argument must be passed
+
     decisionrule:  string. Default: 'diff'
-            'diff' or 'absdiff'
+            'diff', 'absdiff'
+
+    sigma : float.
+            Decision noise
 
     Output
     ----------
@@ -689,11 +696,16 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff'):
                 s2 = triads[t][1]
                 s3 = triads[t][2]
 
+
             # sensory representation variables
             f1 = sensoryrep(s1)
             f2 = sensoryrep(s2)
             f2b = sensoryrep(s2)
             f3 = sensoryrep(s3)
+
+            if (sensoryrep.sigmamin!=0 or sensoryrep.sigmamax!=0) and noisetype=='decision':
+                print "Note: you have set decision noise AND a sensory function with noise"
+
 
             # decision variable
             if decisionrule == 'diff':
@@ -702,6 +714,13 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff'):
                 delta = abs(f3 - f2b) - abs(f2 - f1)
             else:
                 raise ValueError('wrong decision rule "%s"' % decisionrule)
+
+            if noisetype=='decision':
+                delta = delta + random.gauss(0, sigma)
+            elif noisetype=='sensory':
+                pass
+            else:
+                raise ValueError('wrong noise type "%s"' % noisetype)
 
             # binary response
             if delta > 0:
@@ -718,6 +737,12 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff'):
             writer.writerow([t, response, "%.2f" % triads[t][0], "%.2f" % triads[t][1], "%.2f" % triads[t][2], order[t], indxt[t][0]+1, indxt[t][1]+1, indxt[t][2]+1])
 
     rfl.close()
+
+    if decisionrule == 'diff':
+        print "diff"
+    elif decisionrule == 'absdiff':
+        print "absdiff"
+
 
     return filename
 
