@@ -637,7 +637,10 @@ def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1,
 ###############################################################################
 ########################## Simulation utilities   #############################
 
-def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff', noisetype='sensory', sigma=0.0):
+def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff',
+                     noisetype='sensory', sigma=0.0, secondstim='indep',
+                     debug=False):
+
     """ Simulate an observer responding to a triads experiment according
     to a given sensory representation function
 
@@ -657,13 +660,21 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff', noisetype
 
     noisetype: string. Default: 'sensory'
                 'sensory' or 'decision', where the gaussian noise originates.
-                in case of decision, 'sigma' argument must be passed
+                in case of decision, 'sigma' argument is used to establish
+                the decision noise amount
 
     decisionrule:  string. Default: 'diff'
             'diff', 'absdiff'
 
     sigma : float.
-            Decision noise
+            Decision noise. Default = 0.0
+
+    secondstim: string. Either 'indep' or 'same'. Default: 'indep'
+            tells how to draw the 2nd stimulus, which is the middle stimulus
+            in the method of triads, and serves as an anchor. The sensory
+            response can be drawn only once for this stimulus ('same') or
+            twice ('indep')
+
 
     Output
     ----------
@@ -686,7 +697,7 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff', noisetype
     for b in range(nblocks):
         for t in range(len(triads)):
 
-            # slants of current triad
+            # stimulus  values of current triad
             if order[t] == 1:
                 s1 = triads[t][2]
                 s2 = triads[t][1]
@@ -698,11 +709,35 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff', noisetype
 
 
             # sensory representation variables
-            f1 = sensoryrep(s1)
-            f2 = sensoryrep(s2)
-            f2b = sensoryrep(s2)
-            f3 = sensoryrep(s3)
+            if secondstim=='indep':
+                try:
+                    f1, f2, f2b, f3 =  sensoryrep([s1, s2, s2, s3])
+                    if debug: print "vector form, stimulus 2 drawn twice."
 
+                except:
+                    if debug: print "non vector form"
+                    f1 = sensoryrep(s1)
+                    f2 = sensoryrep(s2)
+                    f2b = sensoryrep(s2)
+                    f3 = sensoryrep(s3)
+
+
+            elif secondstim=='same':
+                try:
+                    f1, f2, f3 = sensoryrep([s1, s2, s3])
+                    f2b = f2
+                    if debug: print "vector form, stimulus 2 drawn once."
+                except:
+                    if debug: print "non vector form"
+                    f1= sensoryrep(s1)
+                    f2 = sensoryrep(s2)
+                    f2b = f2
+                    f3 = sensoryrep(s3)
+            else:
+                 raise ValueError('wrong second stimulus rule "%s"' % secondstim)
+
+
+            ##  check noise sources
             if (sensoryrep.sigmamin!=0 or sensoryrep.sigmamax!=0) and noisetype=='decision':
                 print "Note: you have set decision noise AND a sensory function with noise"
 
@@ -714,6 +749,7 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff', noisetype
                 delta = abs(f3 - f2b) - abs(f2 - f1)
             else:
                 raise ValueError('wrong decision rule "%s"' % decisionrule)
+
 
             if noisetype=='decision':
                 delta = delta + random.gauss(0, sigma)
@@ -738,11 +774,10 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff', noisetype
 
     rfl.close()
 
-    if decisionrule == 'diff':
+    if debug and decisionrule == 'diff':
         print "diff"
-    elif decisionrule == 'absdiff':
+    elif debug and decisionrule == 'absdiff':
         print "absdiff"
-
 
     return filename
 
