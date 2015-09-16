@@ -35,11 +35,12 @@ Installation
 
 
 
-Examples
-========
+Usage examples
+==============
 
 - *mlds/example/example.py*  gives usage example for MLDS analysis
 - *mlds/example/example_stim_generation.py*   gives usage example for designing the triads or quadruples.
+- *mlds/example/example_simulation.py*   gives usage example for simulating an observer performing the method of triads.
 
 
 
@@ -47,3 +48,5 @@ Contact
 =======
 Questions? Feedback? Don't hesitate to fork, pull request, or 
 contact me (guillermo@bccn-berlin.de)
+
+This repository has so far only been tested in Linux. 

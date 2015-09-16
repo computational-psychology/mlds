@@ -621,7 +621,7 @@ def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1,
             yerr = abs(s.ci95 - s.mns)
         elif s.ci95.shape[0]==1:
             yerr = s.ci95
-        plt.errorbar(stimoff, s.mns, yerr= yerr, fmt=None, ecolor= color, elinewidth=elinewidth)
+        plt.errorbar(stimoff, s.mns, yerr= yerr, fmt="none", ecolor= color, elinewidth=elinewidth)
         plt.plot(s.stim, s.mns, color= color, label=label, linewidth=linewidth, **kargs)
 
     else:
