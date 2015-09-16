@@ -1,15 +1,36 @@
 --- TODO ----
+Short term before publishing:
 
-- check that minimum requirements are installed (R with MLDS package)
+- generate instructions for installation.
+- generate instruction for testing that installation is OK.
 
-- generate instructions for the use of multithread 
-(with snow package in R)
 
-- make implementation cleaner, use rpy2 instead of passing
-R commands with subprocess.
+In unittest: 
+- check that minimum requirements are installed 
+  (R with MLDS package, rpy2)
+  
+- parallel execution:
+  - check installation of snow package 
+  - check access to localhost using 'username'
+  
+  - do a simple test of snow package load, and run a simple calculation
+
+
+- check if it runs in non-linux OS
+
+
+
+
+--- Long term ---
+
+- make implementation cleaner, use rpy2 in all commands calling R
+  (instead of passing R commands with subprocess)
 
 - improve documentation, add docstrings to all functions
 
 - eventually implement the class so it does not depend on R. 
 For that, one would have to use a GLM solver in python (statmodels?)
+I don't know if this is adviced. We will have to check that both
+implementations are equivalent numerically. And then, after an update 
+on the original MLDS package, we will have to modify ours as well.
 
