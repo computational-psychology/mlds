@@ -7,7 +7,8 @@ Contents
 It contains a python implementation that wraps the
 R package MLDS. This wrapper makes easier to analyse the data
 obtained in MLDS experiments. It also provides the extra
-functionality to using multi-thread for the bootstrap.
+functionality to using multi-thread, making the bootstrap calculation
+much faster.
 
 
 It also contains:
@@ -19,9 +20,9 @@ It also contains:
 Requirements
 ============
 
-- Python modules: rpy2, subprocess, multiprocessing
+- Python modules: numpy, rpy2, subprocess, multiprocessing
 - R, with *MLDS* package already installed. 
-- Optional but recommended: *snow* package
+- Optional but recommended: *snow* package in R.
 
 
 Installation
@@ -44,5 +45,5 @@ Examples
 
 Contact
 =======
-Questions, feedback? Don't hesitate to fork, pull request, or 
+Questions? Feedback? Don't hesitate to fork, pull request, or 
 contact me (guillermo@bccn-berlin.de)
