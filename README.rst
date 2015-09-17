@@ -20,17 +20,19 @@ It also contains:
 Requirements
 ============
 
-- Python modules: numpy, rpy2, subprocess, multiprocessing
-- R, with *MLDS* package already installed. 
+- Python modules: numpy, subprocess, multiprocessing and rpy2 (>=2.3.10)
+
+- R (>=3.0), with the *MLDS* and *psyphy* packages already installed. 
+
 - Optional but recommended: *snow* package in R.
 
 
 Installation
 ============
 
-- Install all requirements. 
+- Install all requirements. Follow *README_install.txt*.
 - Clone the repository from github.
-- For multi-thread: ensure that you can log in via ssh to your own localhost. For that, check *instructions_snowpackage.txt*
+- For adding multi-thread functionality, follow *README_snowpackage.txt*
 - Run the tests: in directory *mlds/mlds/test*, execute *python -m unittest discover*. All tests should pass.
 
 
