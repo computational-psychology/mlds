@@ -15,7 +15,7 @@ class PowerSensoryFunc:
     """
     Generic power sensory function with gaussian noise. Noise can be
     independent or to depend on the sensory function value in a linear fashion.
-    Not vectorial function.. to be called for a single value
+    Vectorial function, it can be called for a single value or a list of values
 
     """
 
@@ -41,7 +41,13 @@ class PowerSensoryFunc:
     def __call__(self, x):
         """  returns a sample at stimulus intensity x  """
 
-        v = random.gauss(self.func(x), self.sigmafunc(x))
+        if isinstance(x, list):
+            v = [random.gauss(self.func(xx), self.sigmafunc(xx)) for xx in x]
+        elif isinstance(x, float) or isinstance(x, int):
+            v = random.gauss(self.func(x), self.sigmafunc(x))
+        else:
+            raise ValueError('provide either a float or int, or a list')
+
         return v
 
 
@@ -49,7 +55,7 @@ class QuadraticSensoryFunc:
     """
     Generic quatratic sensory function with gaussian noise. Noise can be
     independent or to depend on the sensory function value in a linear fashion.
-    Not vectorial function.. to be called for a single value
+    Vectorial function, it can be called for a single value or a list of values
 
     """
 
@@ -74,8 +80,14 @@ class QuadraticSensoryFunc:
 
     def __call__(self, x):
         """  returns a sample at stimulus intensity x  """
+        
+        if isinstance(x, list):
+            v = [random.gauss(self.func(xx), self.sigmafunc(xx)) for xx in x]
+        elif isinstance(x, float) or isinstance(x, int):
+            v = random.gauss(self.func(x), self.sigmafunc(x))
+        else:
+            raise ValueError('provide either a float or int, or a list')
 
-        v = random.gauss(self.func(x), self.sigmafunc(x))
         return v
 
 
