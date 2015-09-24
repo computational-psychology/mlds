@@ -41,12 +41,13 @@ class PowerSensoryFunc:
     def __call__(self, x):
         """  returns a sample at stimulus intensity x  """
 
-        if isinstance(x, list):
-            v = [random.gauss(self.func(xx), self.sigmafunc(xx)) for xx in x]
-        elif isinstance(x, float) or isinstance(x, int):
+        if isinstance(x, float) or isinstance(x, int):
             v = random.gauss(self.func(x), self.sigmafunc(x))
         else:
-            raise ValueError('provide either a float or int, or a list')
+            try:
+                v = [random.gauss(self.func(xx), self.sigmafunc(xx)) for xx in x]
+            except:
+                raise ValueError('provide either a float, an int, a list or a numpy vector')
 
         return v
 
@@ -81,12 +82,13 @@ class QuadraticSensoryFunc:
     def __call__(self, x):
         """  returns a sample at stimulus intensity x  """
         
-        if isinstance(x, list):
-            v = [random.gauss(self.func(xx), self.sigmafunc(xx)) for xx in x]
-        elif isinstance(x, float) or isinstance(x, int):
+        if isinstance(x, float) or isinstance(x, int):
             v = random.gauss(self.func(x), self.sigmafunc(x))
         else:
-            raise ValueError('provide either a float or int, or a list')
+            try:
+                v = [random.gauss(self.func(xx), self.sigmafunc(xx)) for xx in x]
+            except:
+                raise ValueError('provide either a float, an int, a list or a numpy vector')
 
         return v
 
