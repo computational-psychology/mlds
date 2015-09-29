@@ -1,8 +1,8 @@
-pbinom.diagnostics <- function(obj, nsim=200, type = "deviance", no.warn = TRUE, workers="localhost", master="localhost", username='guille') {
+pbinom.diagnostics <- function(obj, nsim=200, type = "deviance", no.warn = TRUE, workers="localhost", master="localhost") {
   
   
   # working with snow
-  cl <- makeSOCKcluster(workers, user=username, master= master)
+  cl <- makeSOCKcluster(workers, master= master)
   # initialize cluster and 
   
   # loads MLDS package on each of the workers

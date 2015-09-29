@@ -26,13 +26,18 @@ obs.load()  # load results from .MLDS file if it exists; otherwise runs the anal
 ## plotting
 print "plotting.."
 plt.figure()
-plt.errorbar(obs.stim, obs.mns, yerr=abs(obs.ci95 - obs.mns), color='#4C72B0', 
+plt.errorbar(obs.stim, obs.mns, yerr=abs(obs.ci95 - obs.mns), color='#4C72B0',
                 linewidth=2, elinewidth=2 )
 
 plt.xlabel('Stimulus')
 plt.ylabel('Difference Scale')
 plt.xlim((-0.1, 1.1))
 plt.show()
+
+
+## if you want, you can create an .R file containing all the R commands
+# that are run in the background
+# obs.saveRcommands()
 
 
 ## Goodness of fit

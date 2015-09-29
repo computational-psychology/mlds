@@ -1,8 +1,8 @@
-pboot.mlds <- function(x, nsim, no.warn = TRUE, workers="localhost", master="localhost", username='guille') {
+pboot.mlds <- function(x, nsim, no.warn = TRUE, workers="localhost", master="localhost") {
   
   
   # working with snow
-  cl <- makeSOCKcluster(workers, user=username, master= master)
+  cl <- makeSOCKcluster(workers, master= master)
   #
   #sfInit(parallel= parallel, cpus= cpus)  # initialize cluster and 
   

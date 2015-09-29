@@ -600,6 +600,14 @@ class MLDSObject:
 
             self.status=2
 
+    #########################################################################
+    def saveRcommands(self):
+        """ Save the commands run by R in each analysis in an R file """
+        Rfname = self.Rdatafile.split('.')[0] + '.R'
+        f = open(Rfname, 'w')
+        f.writelines(self.seq)
+        f.close()
+
 
 
 ###############################################################################
