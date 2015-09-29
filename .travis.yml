@@ -1,0 +1,22 @@
+language: python
+python:
+  - "2.7"
+
+before_install:
+  - sudo add-apt-repository "deb http://cran.cnr.berkeley.edu/bin/linux/ubuntu precise/"
+  - sudo apt-get update -qq
+  - sudo apt-get install -y r-base 
+  - sudo R CMD INSTALL mlds/CRAN/MLDS_0.4.1.tar.gz
+  - sudo R CMD INSTALL mlds/CRAN/psyphy_0.1-9.tar.gz
+
+  
+# command to install dependencies
+install: 
+  - pip install numpy
+  - pip install scipy
+  - pip install rpy2
+
+# command to run tests
+script: 
+  - cd mlds/test
+  - nosetests
