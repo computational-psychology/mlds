@@ -102,7 +102,24 @@ class TestMLDSClass(unittest.TestCase):
         
         self.assertAlmostEqual(obs.AIC, aic, places=d)
         self.assertAlmostEqual(obs.DAF, daf, places=d)
+        
+    def test_simple_othernamecols(self):
+        obs = mlds.MLDSObject('test_cols.csv', boot=False, save=False) 
+        obs.colnames = {'stim' : ['stim1', 'stim2', 'stim3'], 
+                        'response': 'resp'}
+        obs.run()
+        
+        np.testing.assert_almost_equal(obs.scale, scale, decimal= d)
 
+
+    def test_simple_othernamecols2(self):
+        obs = mlds.MLDSObject('test_cols.csv', boot=False, save=False) 
+        obs.colnames = {'stim' : ['stim1', 'stim2', 'stim3'], 
+                        'response': 'resp'}
+        obs.load()
+        
+        np.testing.assert_almost_equal(obs.scale, scale, decimal= d)
+        
         
 #######################################################################
 class TestMLDSComparison(unittest.TestCase):

@@ -89,7 +89,12 @@ class MLDSObject:
         self.rootname = self.filename.split('.')[0]
 
         self.getRdatafilename()
-
+        
+        # default column names in the text file to be read
+        self.colnames = {'stim' : ['s1', 's2', 's3'], 
+                         'response': 'Response'}
+        
+        
         # scale and noise param, stimulus vector
         self.scale = None
         self.lscale = None  # deprecating this
@@ -163,14 +168,17 @@ class MLDSObject:
 
     ###################################################################################################
     def initcommands(self):
-
+        """
+        Generate list of commands to be executed in R
+        
+        """
         self.getRdatafilename()
 
         seq = ["library(MLDS)\n",
                 "library(psyphy)\n",
                "d.df <- read.table('%s', sep=" ", header=TRUE)\n" % self.filename,
-                "stim <- sort(unique(c(d.df$s1, d.df$s2, d.df$s3)))\n",
-                "results <- with(d.df, data.frame(resp = Response, S1= match(s1, stim), S2=match(s2, stim), S3=match(s3, stim)))\n",
+                "stim <- sort(unique(c(d.df$%s, d.df$%s, d.df$%s)))\n" % (self.colnames['stim'][0], self.colnames['stim'][1], self.colnames['stim'][2]),
+                "results <- with(d.df, data.frame(resp = %s, S1= match(%s, stim), S2=match(%s, stim), S3=match(%s, stim)))\n" % (self.colnames['response'], self.colnames['stim'][0], self.colnames['stim'][1], self.colnames['stim'][2]),
                 "results <- as.mlbs.df(results, st=stim)\n"]
 
         # still to be debug is the fact that passing a link function with gamma = lamda = 0 gives different results as passing the link function as a word.
