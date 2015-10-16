@@ -76,6 +76,37 @@ class TestMLDSClass(unittest.TestCase):
         np.testing.assert_almost_equal(obs.sigmaci95, sigmaci95_corrected, decimal=d)
         
         
+    def test_Rdatafilename(self):
+        obs = mlds.MLDSObject('test.csv', boot=False, save=False) 
+                
+        obs.getRdatafilename()
+        assert(obs.Rdatafile == 'test_norm_probit.MLDS')
+
+
+
+    def test_Rdatafilename2(self):
+        obs = mlds.MLDSObject('test.csv', boot=False, save=False, standardscale=False) 
+
+        obs.getRdatafilename()
+        assert(obs.Rdatafile == 'test_unnorm_probit.MLDS')
+
+
+    def test_Rdatafilename3(self):
+        obs = mlds.MLDSObject('test.csv', boot=False, save=False, standardscale=False) 
+        obs.linktype = 'cauchit'
+        
+        obs.getRdatafilename()
+        assert(obs.Rdatafile == 'test_unnorm_cauchit.MLDS')
+
+
+    def test_Rdatafilename4(self):
+        obs = mlds.MLDSObject('test.csv', boot=False, save=False, standardscale=False) 
+        
+        obs.getRdatafilename(force_refit=True)
+        assert(obs.Rdatafile == 'test_unnorm_probit_refit.MLDS')
+        
+        
+
     def test_readcsv(self):
         obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=True)
         obs.mldsfile='output_mldsfile.csv'
@@ -119,6 +150,21 @@ class TestMLDSClass(unittest.TestCase):
         obs.load()
         
         np.testing.assert_almost_equal(obs.scale, scale, decimal= d)
+        
+        
+    def test_dimension_unit(self):
+        obs = mlds.MLDSObject('test.csv', boot=False, save=False, 
+                dimension_unit='stim') 
+        obs.run()
+        
+        
+    def test_dimension_unit_Rdatafilename(self):
+        obs = mlds.MLDSObject('test.csv', boot=False, save=False, 
+                dimension_unit='stim') 
+                
+        obs.getRdatafilename()
+        assert(obs.Rdatafile == 'test_stim_norm_probit.MLDS')
+        
         
         
 #######################################################################

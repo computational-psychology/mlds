@@ -76,7 +76,11 @@ class MLDSObject:
 
         # flags
         self.boot = boot
-        self.dimension_unit = dimension_unit
+        if not dimension_unit:
+            self.dimension_unit = ''
+        else:
+            self.dimension_unit = dimension_unit
+            
         self.keepfiles = keepfiles
         self.standardscale = standardscale
         self.getlinearscale = getlinearscale  # I will deprecate this
@@ -153,21 +157,24 @@ class MLDSObject:
                 print "corrected CIs"
 
     def getRdatafilename(self, force_refit=False):
+        
+        s = []
+        s.append(self.rootname)
+        if not self.dimension_unit=='':
+            s.append(self.dimension_unit)
 
         if self.standardscale:
-            tag = '_norm_'
+            s.append('norm')
         else:
-            tag = '_unnorm_'
-        
-       
-        
-        if self.linkgam == 0.0 and self.linklam == 0.0:
-            self.Rdatafile = self.rootname + "_" + self.dimension_unit + tag + self.linktype + '.MLDS'
-        else:
-            self.Rdatafile = self.rootname  + "_" + self.dimension_unit + tag + self.linktype + '_refit' + '.MLDS'
+            s.append('unnorm')
 
-        if force_refit:
-            self.Rdatafile = self.rootname   + "_" + self.dimension_unit + tag + self.linktype + '_refit' + '.MLDS'
+        s.append(self.linktype)
+        
+        if not (self.linkgam == 0.0 and self.linklam == 0.0) or force_refit:
+            s.append('refit')
+
+        self.Rdatafile = "_".join(s) + '.MLDS'
+         
 
     ###################################################################################################
     def initcommands(self):
@@ -555,7 +562,10 @@ class MLDSObject:
 
         if not os.path.isfile(self.Rdatafile):
             self.saveRobj = True
+            print "MLDS file not found, running analysis.."
             self.run()
+        else:
+            print "reading results from MLDS file"
 
         # scale and bootstrap
         self.readobjectresults()
