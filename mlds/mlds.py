@@ -799,7 +799,7 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff',
                 response = int(not response)
 
             # saves response
-            writer.writerow([t, response, "%.2f" % triads[t][0], "%.2f" % triads[t][1], "%.2f" % triads[t][2], order[t], indxt[t][0]+1, indxt[t][1]+1, indxt[t][2]+1])
+            writer.writerow([t, response, "%.5f" % triads[t][0], "%.5f" % triads[t][1], "%.5f" % triads[t][2], order[t], indxt[t][0]+1, indxt[t][1]+1, indxt[t][2]+1])
 
     rfl.close()
 
