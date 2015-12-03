@@ -322,7 +322,7 @@ class MLDSObject:
             os.remove(self.mldsfile)
 
     ###################################################################################################
-    def rundiagnostics(self):
+    def rundiagnostics(self, saveresiduals=False):
 
         import rpy2.robjects as robjects
 
@@ -343,8 +343,23 @@ class MLDSObject:
             "source(paste('%s', '/pbinom.diagnostics.R', sep=''))\n" % os.path.dirname(sys.modules[__name__].__file__),
             "workers <- c(%s)\n" % ",".join(self.workers),
             "master <- %s\n" % self.master,
-            "obs.diag.prob <- pbinom.diagnostics (obs.mlds, 10000, workers=workers, master=master)\n"
-            "save(results, obs.mlds, obs.bt, obs.mns, obs.low, obs.high, obs.sd, samples, obs.diag.prob, file='%s')\n" % self.Rdatafile ]
+            "obs.diag.prob <- pbinom.diagnostics (obs.mlds, 10000, workers=workers, master=master)\n"]
+            
+            if not saveresiduals:
+                # I take 95% CI envelopes and necesary variables to plot GoF,
+                # and I get rid of all residuals data that it's very heavy.
+                seqdiag.extend(["alpha <- 0.025\n",
+                                "nsim <- dim(obs.diag.prob$resid)[1]\n",
+                                "n <- dim(obs.diag.prob$resid)[2]\n",
+                                "obs.diag.prob$lowc <- obs.diag.prob$resid[alpha * nsim, ]\n",
+                                "obs.diag.prob$highc <- obs.diag.prob$resid[(1 - alpha) * nsim, ]\n",
+                                "obs.diag.prob$resid <- NULL\n",
+                                "obs.diag.prob$alpha <- alpha\n",
+                                "obs.diag.prob$nsim <- nsim\n",
+                                "obs.diag.prob$n <- n\n"])
+            seqdiag.append('save(results, obs.mlds, obs.bt, obs.mns, obs.low, obs.high, obs.sd, samples, obs.diag.prob, file="%s")\n' % self.Rdatafile)
+           
+            
 
             # run MLDS analysis in R
             if self.verbose:
@@ -401,13 +416,14 @@ class MLDSObject:
         self.pmc = robjects.r['pmc'](obsmlds)[0]
 
         ### residuals
-        self.residuals = np.array(robjects.r['residuals'](obsmlds[5]))
+        obj = obsmlds[obsmlds.names.index('obj')]
+        self.residuals = np.array(obj[obj.names.index('residuals')])
 
 
         #### prob
         if 'obs.diag.prob' in objl:
             self.diagnostics = robjects.r['obs.diag.prob']
-            self.prob = list(self.diagnostics[4])[0]
+            self.prob = list(self.diagnostics[self.diagnostics.names.index('p')])[0]
 
         else:
             print "bootstrap diagnostics are not yet calculated"

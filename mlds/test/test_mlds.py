@@ -124,7 +124,14 @@ class TestMLDSClass(unittest.TestCase):
         
         self.compare(obs)
 
-
+    def test_rundiags(self):
+        obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=False)
+        obs.run()
+        obs.rundiagnostics()
+                
+        self.assertAlmostEqual(obs.prob, prob, places=d)
+        
+        
     def test_readdiags(self):
         obs = mlds.MLDSObject('test.csv', boot=False, keepfiles=False)
         obs.Rdatafile = 'output_test.MLDS'
