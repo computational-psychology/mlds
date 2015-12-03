@@ -444,17 +444,19 @@ class MLDSObject:
             import matplotlib.ticker as ticker
 
 
-            NumRuns = np.array(self.diagnostics[0])
-            resid = np.array(self.diagnostics[1])
-            Obs_resid = np.array(self.diagnostics[2])
-            ObsRuns = np.array(self.diagnostics[3])[0]
+            NumRuns = np.array(self.diagnostics[self.diagnostics.names.index('NumRuns')])
+            #resid = np.array(self.diagnostics[1])
+            Obs_resid = np.array(self.diagnostics[self.diagnostics.names.index('Obs.resid')])
+            ObsRuns = np.array(self.diagnostics[self.diagnostics.names.index('ObsRuns')])[0]
 
-            nsim = resid.shape[0]
-            n = resid.shape[1]
-            alpha = 0.025
+            #nsim = resid.shape[0]
+            #n = resid.shape[1]
+            n = int(self.diagnostics[self.diagnostics.names.index('n')][0])
+            
+            lowc = self.diagnostics[self.diagnostics.names.index('lowc')]
+            highc = self.diagnostics[self.diagnostics.names.index('highc')]
+            
             cdfx = (np.arange(1, n + 1, 1) - 0.5) / n
-            id1 = int(alpha * nsim)
-            id2 = int((1 - alpha) * nsim)
 
             fig = plt.figure(figsize=(width, height))
             ax = plt.subplot(1, 2, 1)
@@ -462,8 +464,8 @@ class MLDSObject:
             ax.set_ylabel("Cumulative density function")
             ax.plot(np.sort(Obs_resid), cdfx, 'o', markersize=1,
                      markeredgecolor='k', markerfacecolor='k')
-            ax.plot(resid[id1, :], cdfx, '-', color='#4C72B0', linewidth=1)
-            ax.plot(resid[id2, :], cdfx, '-', color='#4C72B0', linewidth=1)
+            ax.plot(lowc, cdfx, '-', color='#4C72B0', linewidth=1)
+            ax.plot(highc, cdfx, '-', color='#4C72B0', linewidth=1)
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
             ax.tick_params(right=False, top=False)
