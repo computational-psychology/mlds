@@ -338,12 +338,19 @@ class MLDSObject:
             self.getRdatafilename()
 
             seqdiag = ["library(MLDS)\n",
-            "load('%s')\n" % self.Rdatafile,
-            "library(snow)\n",
-            "source(paste('%s', '/pbinom.diagnostics.R', sep=''))\n" % os.path.dirname(sys.modules[__name__].__file__),
-            "workers <- c(%s)\n" % ",".join(self.workers),
-            "master <- %s\n" % self.master,
-            "obs.diag.prob <- pbinom.diagnostics (obs.mlds, 10000, workers=workers, master=master)\n"]
+            "load('%s')\n" % self.Rdatafile]
+            
+            
+            if self.parallel:
+                seqdiag.extend(["library(snow)\n",
+                "source(paste('%s', '/pbinom.diagnostics.R', sep=''))\n" % os.path.dirname(sys.modules[__name__].__file__),
+                "workers <- c(%s)\n" % ",".join(self.workers),
+                "master <- %s\n" % self.master,
+                "obs.diag.prob <- pbinom.diagnostics (obs.mlds, 10000, workers=workers, master=master)\n"])
+                
+            else:
+                seqdiag.extend(["obs.diag.prob <- binom.diagnostics (obs.mlds, 10000)\n"])
+            
             
             if not saveresiduals:
                 # I take 95% CI envelopes and necesary variables to plot GoF,

@@ -5,7 +5,7 @@ Unittests for mlds module
 @author: G. Aguilar, Oct 2014
 """
 
-import sys
+import sys, os
 sys.path.append('../')
 import mlds
 import mlds_gam
@@ -124,14 +124,27 @@ class TestMLDSClass(unittest.TestCase):
         
         self.compare(obs)
 
+    @unittest.skip("skipping bootstrap diagnostics, saving time")
     def test_rundiags(self):
         obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=False)
+        obs.parallel = False
         obs.run()
         obs.rundiagnostics()
                 
         self.assertAlmostEqual(obs.prob, prob, places=d)
-        
-        
+        os.remove(obs.Rdatafile)
+    
+    @unittest.skip("skipping bootstrap diagnostics, saving time")
+    def test_rundiags_nosave(self, saveresiduals=False):
+        obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=False)
+        obs.parallel = False
+        obs.run()
+        obs.rundiagnostics()
+                
+        self.assertAlmostEqual(obs.prob, prob, places=d)    
+        os.remove(obs.Rdatafile)
+       
+       
     def test_readdiags(self):
         obs = mlds.MLDSObject('test.csv', boot=False, keepfiles=False)
         obs.Rdatafile = 'output_test.MLDS'
