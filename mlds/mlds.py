@@ -354,7 +354,7 @@ class MLDSObject:
             
             if not saveresiduals:
                 # I take 95% CI envelopes and necesary variables to plot GoF,
-                # and I get rid of all residuals data that it's very heavy.
+                # and I get rid of all residuals data that is very heavy.
                 seqdiag.extend(["alpha <- 0.025\n",
                                 "nsim <- dim(obs.diag.prob$resid)[1]\n",
                                 "n <- dim(obs.diag.prob$resid)[2]\n",
