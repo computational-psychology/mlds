@@ -76,6 +76,7 @@ class MLDSObject:
 
         # flags
         self.boot = boot
+        self.nsamples = 10000
         if not dimension_unit:
             self.dimension_unit = ''
         else:
@@ -214,9 +215,9 @@ class MLDSObject:
                          "source(paste('%s', '/pboot.mlds.R', sep=''))\n" % os.path.dirname(sys.modules[__name__].__file__),
                          "workers <- c(%s)\n" % ",".join(self.workers),
                          "master <- %s\n" % self.master,
-                         "obs.bt <- pboot.mlds(obs.mlds, 10000, workers = workers, master=master )\n"])
+                         "obs.bt <- pboot.mlds(obs.mlds, %d, workers = workers, master=master )\n" % self.nsamples])
             else:
-                seq.extend(["obs.bt <- boot.mlds(obs.mlds, 10000)\n"])
+                seq.extend(["obs.bt <- boot.mlds(obs.mlds, %d)\n" % self.nsamples])
 
             if self.standardscale:  # still to add
                 seq.extend(["samples <- obs.bt$boot.samp\n"])
@@ -346,10 +347,10 @@ class MLDSObject:
                 "source(paste('%s', '/pbinom.diagnostics.R', sep=''))\n" % os.path.dirname(sys.modules[__name__].__file__),
                 "workers <- c(%s)\n" % ",".join(self.workers),
                 "master <- %s\n" % self.master,
-                "obs.diag.prob <- pbinom.diagnostics (obs.mlds, 10000, workers=workers, master=master)\n"])
+                "obs.diag.prob <- pbinom.diagnostics (obs.mlds, %d, workers=workers, master=master)\n" % self.nsamples])
                 
             else:
-                seqdiag.extend(["obs.diag.prob <- binom.diagnostics (obs.mlds, 10000)\n"])
+                seqdiag.extend(["obs.diag.prob <- binom.diagnostics (obs.mlds, %d)\n" % self.nsamples])
             
             
             if not saveresiduals:
