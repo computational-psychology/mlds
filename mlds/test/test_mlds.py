@@ -5,7 +5,7 @@ Unittests for mlds module
 @author: G. Aguilar, Oct 2014
 """
 
-import sys
+import sys, os
 sys.path.append('../')
 import mlds
 import mlds_gam
@@ -25,7 +25,7 @@ sigmaci95 = np.array([0.133503277554566, 0.181765764894874])
 
 aic = 570.3924
 daf = 0.5187585
-prob = 0.927
+prob = 0.93
 
 # corrected CI
 low_C= np.array([0.00000000, -0.02149037, 0.02468978, 0.10483483, 0.13793712, 0.22326763, 0.33504963, 0.43554262, 0.59778788, 0.68618777, 1.00000000])
@@ -76,6 +76,37 @@ class TestMLDSClass(unittest.TestCase):
         np.testing.assert_almost_equal(obs.sigmaci95, sigmaci95_corrected, decimal=d)
         
         
+    def test_Rdatafilename(self):
+        obs = mlds.MLDSObject('test.csv', boot=False, save=False) 
+                
+        obs.getRdatafilename()
+        assert(obs.Rdatafile == 'test_norm_probit.MLDS')
+
+
+
+    def test_Rdatafilename2(self):
+        obs = mlds.MLDSObject('test.csv', boot=False, save=False, standardscale=False) 
+
+        obs.getRdatafilename()
+        assert(obs.Rdatafile == 'test_unnorm_probit.MLDS')
+
+
+    def test_Rdatafilename3(self):
+        obs = mlds.MLDSObject('test.csv', boot=False, save=False, standardscale=False) 
+        obs.linktype = 'cauchit'
+        
+        obs.getRdatafilename()
+        assert(obs.Rdatafile == 'test_unnorm_cauchit.MLDS')
+
+
+    def test_Rdatafilename4(self):
+        obs = mlds.MLDSObject('test.csv', boot=False, save=False, standardscale=False) 
+        
+        obs.getRdatafilename(force_refit=True)
+        assert(obs.Rdatafile == 'test_unnorm_probit_refit.MLDS')
+        
+        
+
     def test_readcsv(self):
         obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=True)
         obs.mldsfile='output_mldsfile.csv'
@@ -93,7 +124,27 @@ class TestMLDSClass(unittest.TestCase):
         
         self.compare(obs)
 
-
+    #@unittest.skip("skipping bootstrap diagnostics, saving time")
+    def test_rundiags(self):
+        obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=False)
+        obs.parallel = False
+        obs.run()
+        obs.rundiagnostics()
+                
+        self.assertAlmostEqual(obs.prob, prob, places=1)
+        os.remove(obs.Rdatafile)
+    
+    #@unittest.skip("skipping bootstrap diagnostics, saving time")
+    def test_rundiags_nosave(self, saveresiduals=False):
+        obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=False)
+        obs.parallel = False
+        obs.run()
+        obs.rundiagnostics()
+                
+        self.assertAlmostEqual(obs.prob, prob, places=1)    
+        os.remove(obs.Rdatafile)
+       
+       
     def test_readdiags(self):
         obs = mlds.MLDSObject('test.csv', boot=False, keepfiles=False)
         obs.Rdatafile = 'output_test.MLDS'
@@ -102,7 +153,39 @@ class TestMLDSClass(unittest.TestCase):
         
         self.assertAlmostEqual(obs.AIC, aic, places=d)
         self.assertAlmostEqual(obs.DAF, daf, places=d)
+        
+    def test_simple_othernamecols(self):
+        obs = mlds.MLDSObject('test_cols.csv', boot=False, save=False) 
+        obs.colnames = {'stim' : ['stim1', 'stim2', 'stim3'], 
+                        'response': 'resp'}
+        obs.run()
+        
+        np.testing.assert_almost_equal(obs.scale, scale, decimal= d)
 
+
+    def test_simple_othernamecols2(self):
+        obs = mlds.MLDSObject('test_cols.csv', boot=False, save=False) 
+        obs.colnames = {'stim' : ['stim1', 'stim2', 'stim3'], 
+                        'response': 'resp'}
+        obs.load()
+        
+        np.testing.assert_almost_equal(obs.scale, scale, decimal= d)
+        
+        
+    def test_dimension_unit(self):
+        obs = mlds.MLDSObject('test.csv', boot=False, save=False, 
+                dimension_unit='stim') 
+        obs.run()
+        
+        
+    def test_dimension_unit_Rdatafilename(self):
+        obs = mlds.MLDSObject('test.csv', boot=False, save=False, 
+                dimension_unit='stim') 
+                
+        obs.getRdatafilename()
+        assert(obs.Rdatafile == 'test_stim_norm_probit.MLDS')
+        
+        
         
 #######################################################################
 class TestMLDSComparison(unittest.TestCase):

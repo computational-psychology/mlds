@@ -68,7 +68,7 @@ class MLDSObject:
 
     """
 
-    def __init__(self, filename, boot=False, keepfiles=False, standardscale=True, getlinearscale=False, verbose=False, save=True):
+    def __init__(self, filename, boot=False, dimension_unit = False, keepfiles=False, standardscale=True, getlinearscale=False, verbose=False, save=True):
 
         # 0: just initialized, 1: mlds computed, 2: bootstrapped, -1: error
         self.status = 0
@@ -76,6 +76,12 @@ class MLDSObject:
 
         # flags
         self.boot = boot
+        self.nsamples = 10000
+        if not dimension_unit:
+            self.dimension_unit = ''
+        else:
+            self.dimension_unit = dimension_unit
+            
         self.keepfiles = keepfiles
         self.standardscale = standardscale
         self.getlinearscale = getlinearscale  # I will deprecate this
@@ -89,7 +95,12 @@ class MLDSObject:
         self.rootname = self.filename.split('.')[0]
 
         self.getRdatafilename()
-
+        
+        # default column names in the text file to be read
+        self.colnames = {'stim' : ['s1', 's2', 's3'], 
+                         'response': 'Response'}
+        
+        
         # scale and noise param, stimulus vector
         self.scale = None
         self.lscale = None  # deprecating this
@@ -147,30 +158,38 @@ class MLDSObject:
                 print "corrected CIs"
 
     def getRdatafilename(self, force_refit=False):
+        
+        s = []
+        s.append(self.rootname)
+        if not self.dimension_unit=='':
+            s.append(self.dimension_unit)
 
         if self.standardscale:
-            tag = '_norm_'
+            s.append('norm')
         else:
-            tag = '_unnorm_'
+            s.append('unnorm')
 
-        if self.linkgam == 0.0 and self.linklam == 0.0:
-            self.Rdatafile = self.rootname + tag + self.linktype + '.MLDS'
-        else:
-            self.Rdatafile = self.rootname + tag + self.linktype + '_refit' + '.MLDS'
+        s.append(self.linktype)
+        
+        if not (self.linkgam == 0.0 and self.linklam == 0.0) or force_refit:
+            s.append('refit')
 
-        if force_refit:
-            self.Rdatafile = self.rootname + tag + self.linktype + '_refit' + '.MLDS'
+        self.Rdatafile = "_".join(s) + '.MLDS'
+         
 
     ###################################################################################################
     def initcommands(self):
-
+        """
+        Generate list of commands to be executed in R
+        
+        """
         self.getRdatafilename()
 
         seq = ["library(MLDS)\n",
                 "library(psyphy)\n",
-               "d.df <- read.table('%s', sep=" ", header=TRUE)\n" % self.filename,
-                "stim <- sort(unique(c(d.df$s1, d.df$s2, d.df$s3)))\n",
-                "results <- with(d.df, data.frame(resp = Response, S1= match(s1, stim), S2=match(s2, stim), S3=match(s3, stim)))\n",
+                "d.df <- read.table('%s', sep=" ", header=TRUE)\n" % self.filename,
+                "stim <- sort(unique(c(d.df$%s, d.df$%s, d.df$%s)))\n" % (self.colnames['stim'][0], self.colnames['stim'][1], self.colnames['stim'][2]),
+                "results <- with(d.df, data.frame(resp = %s, S1= match(%s, stim), S2=match(%s, stim), S3=match(%s, stim)))\n" % (self.colnames['response'], self.colnames['stim'][0], self.colnames['stim'][1], self.colnames['stim'][2]),
                 "results <- as.mlbs.df(results, st=stim)\n"]
 
         # still to be debug is the fact that passing a link function with gamma = lamda = 0 gives different results as passing the link function as a word.
@@ -196,9 +215,9 @@ class MLDSObject:
                          "source(paste('%s', '/pboot.mlds.R', sep=''))\n" % os.path.dirname(sys.modules[__name__].__file__),
                          "workers <- c(%s)\n" % ",".join(self.workers),
                          "master <- %s\n" % self.master,
-                         "obs.bt <- pboot.mlds(obs.mlds, 10000, workers = workers, master=master )\n"])
+                         "obs.bt <- pboot.mlds(obs.mlds, %d, workers = workers, master=master )\n" % self.nsamples])
             else:
-                seq.extend(["obs.bt <- boot.mlds(obs.mlds, 10000)\n"])
+                seq.extend(["obs.bt <- boot.mlds(obs.mlds, %d)\n" % self.nsamples])
 
             if self.standardscale:  # still to add
                 seq.extend(["samples <- obs.bt$boot.samp\n"])
@@ -304,7 +323,7 @@ class MLDSObject:
             os.remove(self.mldsfile)
 
     ###################################################################################################
-    def rundiagnostics(self):
+    def rundiagnostics(self, saveresiduals=False):
 
         import rpy2.robjects as robjects
 
@@ -320,13 +339,35 @@ class MLDSObject:
             self.getRdatafilename()
 
             seqdiag = ["library(MLDS)\n",
-            "load('%s')\n" % self.Rdatafile,
-            "library(snow)\n",
-            "source(paste('%s', '/pbinom.diagnostics.R', sep=''))\n" % os.path.dirname(sys.modules[__name__].__file__),
-            "workers <- c(%s)\n" % ",".join(self.workers),
-            "master <- %s\n" % self.master,
-            "obs.diag.prob <- pbinom.diagnostics (obs.mlds, 10000, workers=workers, master=master)\n"
-            "save(results, obs.mlds, obs.bt, obs.mns, obs.low, obs.high, obs.sd, samples, obs.diag.prob, file='%s')\n" % self.Rdatafile ]
+            "load('%s')\n" % self.Rdatafile]
+            
+            
+            if self.parallel:
+                seqdiag.extend(["library(snow)\n",
+                "source(paste('%s', '/pbinom.diagnostics.R', sep=''))\n" % os.path.dirname(sys.modules[__name__].__file__),
+                "workers <- c(%s)\n" % ",".join(self.workers),
+                "master <- %s\n" % self.master,
+                "obs.diag.prob <- pbinom.diagnostics (obs.mlds, %d, workers=workers, master=master)\n" % self.nsamples])
+                
+            else:
+                seqdiag.extend(["obs.diag.prob <- binom.diagnostics (obs.mlds, %d)\n" % self.nsamples])
+            
+            
+            if not saveresiduals:
+                # I take 95% CI envelopes and necesary variables to plot GoF,
+                # and I get rid of all residuals data that is very heavy.
+                seqdiag.extend(["alpha <- 0.025\n",
+                                "nsim <- dim(obs.diag.prob$resid)[1]\n",
+                                "n <- dim(obs.diag.prob$resid)[2]\n",
+                                "obs.diag.prob$lowc <- obs.diag.prob$resid[alpha * nsim, ]\n",
+                                "obs.diag.prob$highc <- obs.diag.prob$resid[(1 - alpha) * nsim, ]\n",
+                                "obs.diag.prob$resid <- NULL\n",
+                                "obs.diag.prob$alpha <- alpha\n",
+                                "obs.diag.prob$nsim <- nsim\n",
+                                "obs.diag.prob$n <- n\n"])
+            seqdiag.append('save(results, obs.mlds, obs.bt, obs.mns, obs.low, obs.high, obs.sd, samples, obs.diag.prob, file="%s")\n' % self.Rdatafile)
+           
+            
 
             # run MLDS analysis in R
             if self.verbose:
@@ -383,13 +424,14 @@ class MLDSObject:
         self.pmc = robjects.r['pmc'](obsmlds)[0]
 
         ### residuals
-        self.residuals = np.array(robjects.r['residuals'](obsmlds[5]))
+        obj = obsmlds[obsmlds.names.index('obj')]
+        self.residuals = np.array(obj[obj.names.index('residuals')])
 
 
         #### prob
         if 'obs.diag.prob' in objl:
             self.diagnostics = robjects.r['obs.diag.prob']
-            self.prob = list(self.diagnostics[4])[0]
+            self.prob = list(self.diagnostics[self.diagnostics.names.index('p')])[0]
 
         else:
             print "bootstrap diagnostics are not yet calculated"
@@ -403,17 +445,19 @@ class MLDSObject:
             import matplotlib.ticker as ticker
 
 
-            NumRuns = np.array(self.diagnostics[0])
-            resid = np.array(self.diagnostics[1])
-            Obs_resid = np.array(self.diagnostics[2])
-            ObsRuns = np.array(self.diagnostics[3])[0]
+            NumRuns = np.array(self.diagnostics[self.diagnostics.names.index('NumRuns')])
+            #resid = np.array(self.diagnostics[1])
+            Obs_resid = np.array(self.diagnostics[self.diagnostics.names.index('Obs.resid')])
+            ObsRuns = np.array(self.diagnostics[self.diagnostics.names.index('ObsRuns')])[0]
 
-            nsim = resid.shape[0]
-            n = resid.shape[1]
-            alpha = 0.025
+            #nsim = resid.shape[0]
+            #n = resid.shape[1]
+            n = int(self.diagnostics[self.diagnostics.names.index('n')][0])
+            
+            lowc = self.diagnostics[self.diagnostics.names.index('lowc')]
+            highc = self.diagnostics[self.diagnostics.names.index('highc')]
+            
             cdfx = (np.arange(1, n + 1, 1) - 0.5) / n
-            id1 = int(alpha * nsim)
-            id2 = int((1 - alpha) * nsim)
 
             fig = plt.figure(figsize=(width, height))
             ax = plt.subplot(1, 2, 1)
@@ -421,8 +465,8 @@ class MLDSObject:
             ax.set_ylabel("Cumulative density function")
             ax.plot(np.sort(Obs_resid), cdfx, 'o', markersize=1,
                      markeredgecolor='k', markerfacecolor='k')
-            ax.plot(resid[id1, :], cdfx, '-', color='#4C72B0', linewidth=1)
-            ax.plot(resid[id2, :], cdfx, '-', color='#4C72B0', linewidth=1)
+            ax.plot(lowc, cdfx, '-', color='#4C72B0', linewidth=1)
+            ax.plot(highc, cdfx, '-', color='#4C72B0', linewidth=1)
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
             ax.tick_params(right=False, top=False)
@@ -544,7 +588,10 @@ class MLDSObject:
 
         if not os.path.isfile(self.Rdatafile):
             self.saveRobj = True
+            print "MLDS file not found, running analysis.."
             self.run()
+        else:
+            print "reading results from MLDS file"
 
         # scale and bootstrap
         self.readobjectresults()
@@ -778,7 +825,7 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff',
                 response = int(not response)
 
             # saves response
-            writer.writerow([t, response, "%.2f" % triads[t][0], "%.2f" % triads[t][1], "%.2f" % triads[t][2], order[t], indxt[t][0]+1, indxt[t][1]+1, indxt[t][2]+1])
+            writer.writerow([t, response, "%.5f" % triads[t][0], "%.5f" % triads[t][1], "%.5f" % triads[t][2], order[t], indxt[t][0]+1, indxt[t][1]+1, indxt[t][2]+1])
 
     rfl.close()
 
