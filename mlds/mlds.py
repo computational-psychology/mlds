@@ -490,7 +490,7 @@ class MLDSObject:
 #        robjects.r('dev.off()')
 
     ###################################################################################################
-    def setsubset(self, cuts):
+    def setsubset(self, cuts, write=False):
         if self.residuals==None:
             print "subset aborted: you should run diagnostics first"
             return
@@ -499,18 +499,26 @@ class MLDSObject:
 
         import pandas as pd
 
-        orig = pd.read_csv( self.filename , sep=" ")
-        dest = orig[np.logical_not(invalid)]
 
         rootname = self.filename.split('.')[0]
         fname = "%s_subset.csv" % rootname
-        dest.to_csv(fname,  sep=' ', index=False)
+        
+        if write:
+            orig = pd.read_csv( self.filename , sep=" ")
+            dest = orig[np.logical_not(invalid)]
+        
+            dest.to_csv(fname,  sep=' ', index=False)
+            
+            print "subset created, new filename: %s" % fname
+            print "you must now run() or load() to update results"
+            
+        else:
+            print "object filename updated"
+            print "run() or load() to update results"
+        
 
         self.filename = fname
         self.rootname = self.filename.split('.')[0]
-        print "subset created, new filename: %s" % fname
-        print "you must now run() or load() to update results"
-
 
 
     ###################################################################################################
