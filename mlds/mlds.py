@@ -433,8 +433,8 @@ class MLDSObject:
             self.diagnostics = robjects.r['obs.diag.prob']
             self.prob = list(self.diagnostics[self.diagnostics.names.index('p')])[0]
 
-        else:
-            print "bootstrap diagnostics are not yet calculated"
+        #else:
+        #   print "bootstrap diagnostics are not yet calculated"
 
     ###################################################################################################
     def plotdiags(self, width=10, height=5):
