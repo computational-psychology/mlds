@@ -145,6 +145,88 @@ class Cue2DSensoryFunc:
 
 
 
+
+class PowerSensoryFunc_corr:
+
+    def __init__(self):
+
+        # power function
+        self.exponent = 2  # default values
+        self.a = 1.0
+        self.c = 0.0
+
+        # gives the mean of the function
+        self.func = lambda x: self.a*x**self.exponent + self.c
+
+        self.sigmamin = 0.0
+        self.sigmamax = 0.0
+
+        # noise function
+        self.sigmafunc = lambda x: (self.sigmamax - self.sigmamin) * self.func(x) + self.sigmamin
+        
+        # covariance matrix
+        self.cov = np.zeros((4, 4))
+        
+        # nondiagonal elements
+        self.sigma_nd = 0.00
+        
+
+    def setcov(self, x, corranchor=False):
+        """ Set covariance matrix for a given stimulus vector """
+               
+        # non diagonal values are the correlation terms,, fixed for all combinations
+        self.cov = np.ones((4, 4)) * (self.sigma_nd**2)  
+                
+
+        # diagonal indices depend on the stimulus value itself
+        for i in range(4):
+            self.cov[i,i] = self.sigmafunc(x[i])**2
+            
+
+        # covariance values between 1 and 2 are full correlated
+        if corranchor:
+            self.cov[1, 2] = 1.0
+            self.cov[2, 1] = 1.0
+            
+        
+
+    def __call__(self, x):
+        """  returns a sample at stimulus intensities in the vector x,
+        with covariance cov"""
+        
+        ##
+        if len(x)<3:
+            raise(ValueError, "stimulus vector should be at least have 3 values")
+        elif len(x)==3:
+            X = [x[0], x[1], x[1], x[2]]  # three values are converted to four values vector
+            corranchor = True
+        elif len(x)==4:
+            X = x
+            corranchor=False
+        else:
+            raise(ValueError, "stimulus vector should be 3 or 4 values in length")
+               
+            
+        #print X
+        # get means 
+        mu_triad = [self.func(i) for i in X]
+        #print mu_triad
+        
+        # and covariance
+        self.setcov(X, corranchor)
+
+        # get the draws from gauss distribution multivariate
+        v = np.random.multivariate_normal(mu_triad, self.cov)
+        return v
+        
+
+# how to calculate correlation matrix from covariance matrix     
+# D = np.sqrt(np.diag(fn.cov))
+# (1.0/D)*fn.cov*(1.0/D)
+
+
+
+
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
