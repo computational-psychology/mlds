@@ -124,7 +124,7 @@ class TestMLDSClass(unittest.TestCase):
         
         self.compare(obs)
 
-    #@unittest.skip("skipping bootstrap diagnostics, saving time")
+    @unittest.skip("skipping bootstrap diagnostics, saving time")
     def test_rundiags(self):
         obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=False)
         obs.parallel = False
@@ -134,7 +134,7 @@ class TestMLDSClass(unittest.TestCase):
         self.assertAlmostEqual(obs.prob, prob, places=1)
         os.remove(obs.Rdatafile)
     
-    #@unittest.skip("skipping bootstrap diagnostics, saving time")
+    @unittest.skip("skipping bootstrap diagnostics, saving time")
     def test_rundiags_nosave(self, saveresiduals=False):
         obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=False)
         obs.parallel = False

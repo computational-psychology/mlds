@@ -631,6 +631,10 @@ class MLDSObject:
 
         self.stim = np.array(obsmlds[1])
         self.status=1
+        
+        # GLM object
+        self.GLMobject = obsmlds[obsmlds.names.index('obj')]
+
 
         # if bootstrapped
         if self.boot:
