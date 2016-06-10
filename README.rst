@@ -1,5 +1,4 @@
 Python wrapper for MLDS R package.
-[![Build Status](https://travis-ci.org/TUBvision/mlds.svg?branch=master)](https://travis-ci.org/TUBvision/mlds)
 
 
 Contents
