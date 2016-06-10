@@ -4,17 +4,12 @@ Python wrapper for MLDS R package.
 Contents
 ========
 
-It contains a python implementation that wraps the
-R package MLDS. This wrapper makes easier to analyse the data
-obtained in MLDS experiments. It also provides the extra
-functionality to using multi-thread, making the bootstrap calculation
-much faster.
+It contains:
 
-
-It also contains:
+- a python implementation that wraps the R package MLDS. This wrapper makes easier to analyse the data obtained in MLDS experiments. It also provides the extra functionality to using multi-thread, making the bootstrap calculation much faster.
 
 - utilities for designing MLDS experiments (method of triads and quadruples)
-- functions to simulate an observer performing an MLDS experiment.
+- functions to simulate an observer performing an MLDS experiment (so far only for the method of triads).
 
 
 Requirements
@@ -22,18 +17,21 @@ Requirements
 
 - Python modules: numpy, subprocess, multiprocessing and rpy2 (>=2.3.10)
 
-- R (>=3.0), with the *MLDS* and *psyphy* packages already installed. 
-
+- R (>=3.0), with the *MLDS* and *psyphy* packages already installed.
 - Optional but recommended: *snow* package in R.
+
+To install python modules, use the package manager of your sytem (in Debian, apt-get)
+R packages can be installed from CRAN or using the files provided in this repository (mlds/mlds/CRAN)
+
 
 
 Installation
 ============
 
-- Install all requirements. Follow *README_install.txt*.
-- Clone the repository from github.
-- For adding multi-thread functionality, follow *README_snowpackage.txt*
-- Run the tests: in directory *mlds/mlds/test*, execute *python -m unittest discover*. All tests should pass.
+- Install all requirements.
+- Clone the repository from github  (*git clone https://github.com/TUBvision/mlds.git*) 
+- For adding multi-thread functionality, also install the package *snow* in R.
+- Run the tests: go to the directory *mlds/mlds/test* and execute: *python -m unittest discover*. All tests should pass.
 
 
 
@@ -51,4 +49,4 @@ Contact
 Questions? Feedback? Don't hesitate to fork, pull request, or 
 contact me (guillermo@bccn-berlin.de)
 
-This repository has so far only been tested in Linux. 
+This repository has so far only been tested in Linux (Debian Wheezy and Jessie, Ubuntu) 
