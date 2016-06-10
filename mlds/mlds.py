@@ -596,7 +596,7 @@ class MLDSObject:
 
         if not os.path.isfile(self.Rdatafile):
             self.saveRobj = True
-            print "MLDS file not found, running analysis.."
+            print ".. running analysis.."
             self.run()
         else:
             print "reading results from MLDS file"

@@ -17,8 +17,9 @@ d = 2  # decimal positions to compare
 class TestPowerfunctionClass(unittest.TestCase):
     
     def setUp(self):
-        fn = PowerSensoryFunc()
         global fn
+        fn = PowerSensoryFunc()
+        
         
         fn.sigmamin = 0.0
         fn.sigmamax = 0.0
@@ -44,8 +45,8 @@ class TestPowerfunctionClass(unittest.TestCase):
 class TestQuadraticfunctionClass(unittest.TestCase):
     
     def setUp(self):
-        fn = QuadraticSensoryFunc()
         global fn
+        fn = QuadraticSensoryFunc()
         
         fn.sigmamin = 0.0
         fn.sigmamax = 0.0
