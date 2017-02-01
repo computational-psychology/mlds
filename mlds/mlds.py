@@ -273,6 +273,8 @@ class MLDSObject:
         self.returncode = proc.returncode
 
         if self.verbose:
+            print "return code: %d" % self.returncode
+            print "output: "
             print out
 
         if self.returncode==0:
@@ -596,10 +598,12 @@ class MLDSObject:
 
         if not os.path.isfile(self.Rdatafile):
             self.saveRobj = True
-            print ".. running analysis.."
+            if self.verbose:
+                print ".. running analysis.."
             self.run()
         else:
-            print "reading results from MLDS file"
+            if self.verbose:
+                print "reading results from MLDS file"
 
         # scale and bootstrap
         self.readobjectresults()

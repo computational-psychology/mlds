@@ -59,17 +59,19 @@ class TestMLDSClass(unittest.TestCase):
         np.testing.assert_almost_equal(obs.scale, scale, decimal= d)
         
     
-    @unittest.skip("skipping bootstrap, saving time")
+    #@unittest.skip("skipping bootstrap, saving time")
     def test_bootstrap(self):
         obs = mlds.MLDSObject('test.csv', boot=True, save=False)
+        obs.nsamples = 100
         obs.run()
         
         self.compare(obs)
     
-    @unittest.skip("skipping bootstrap, saving time")
+    #@unittest.skip("skipping bootstrap, saving time")
     def test_bootstrap_correctedCI(self):
         obs = mlds.MLDSObject('test.csv', boot=True, save=False)
         obs.correctedCI=True
+        obs.nsamples = 100
         obs.run()
         
         np.testing.assert_almost_equal(obs.ci95, ci95_corrected, decimal=d)
@@ -124,20 +126,22 @@ class TestMLDSClass(unittest.TestCase):
         
         self.compare(obs)
 
-    @unittest.skip("skipping bootstrap diagnostics, saving time")
+    #@unittest.skip("skipping bootstrap diagnostics, saving time")
     def test_rundiags(self):
         obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=False)
-        obs.parallel = False
+        obs.parallel = True
+        obs.nsamples = 100
         obs.run()
         obs.rundiagnostics()
                 
         self.assertAlmostEqual(obs.prob, prob, places=1)
         os.remove(obs.Rdatafile)
     
-    @unittest.skip("skipping bootstrap diagnostics, saving time")
+    #@unittest.skip("skipping bootstrap diagnostics, saving time")
     def test_rundiags_nosave(self, saveresiduals=False):
         obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=False)
-        obs.parallel = False
+        obs.parallel = True
+        obs.nsamples = 100
         obs.run()
         obs.rundiagnostics()
                 
