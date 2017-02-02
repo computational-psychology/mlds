@@ -129,7 +129,6 @@ class TestMLDSClass(unittest.TestCase):
     #@unittest.skip("skipping bootstrap diagnostics, saving time")
     def test_rundiags(self):
         obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=False)
-        obs.parallel = True
         obs.nsamples = 100
         obs.run()
         obs.rundiagnostics()
@@ -140,7 +139,6 @@ class TestMLDSClass(unittest.TestCase):
     #@unittest.skip("skipping bootstrap diagnostics, saving time")
     def test_rundiags_nosave(self, saveresiduals=False):
         obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=False)
-        obs.parallel = True
         obs.nsamples = 100
         obs.run()
         obs.rundiagnostics()
