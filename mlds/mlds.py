@@ -660,6 +660,8 @@ class MLDSObject:
 
             self.scalesbt = np.vstack((anchor, arr))
             self.sigmabt = np.array(bt)[-1,:]
+            
+            self.nsamples = self.scalesbt.shape[1]
 
             self.status=2
 
