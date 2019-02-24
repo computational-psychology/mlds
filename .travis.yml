@@ -1,6 +1,7 @@
 language: python
+dist: trusty
 python:
-  - "3.x"
+  - "3.3"
 
 virtualenv:
   system_site_packages: true
