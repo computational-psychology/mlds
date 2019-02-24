@@ -1,6 +1,6 @@
 language: python
 python:
-  - "2.7"
+  - "3.5"
 
 virtualenv:
   system_site_packages: true
@@ -17,7 +17,7 @@ before_install:
   
 # command to install dependencies
 install: 
-  - pip install rpy2
+  - pip3 install rpy2
 
 # command to run tests
 script: 
