@@ -94,7 +94,7 @@ class MLDSGAMCompare:
         by_mat = r('by.mat <- matrix(c(1, -2, 1), nc = 3, nr = nrow(dfst), byrow = TRUE)')
         S_mat =  r('S.mat <- with(dfst, cbind(S1 = S1, S2 = S2, S3 = S3))')
         m_gam =  r('m.gam <- gam(resp ~ s(S.mat, k = k, by = by.mat), family = binomial(%s), data = dfst)' % self.link)
-        if printflag: print m_gam
+        if printflag: print(m_gam)
         
         # 
         svec = r('svec <- seq(min(stim), max(stim), len = 100)')  # stimulus vector
@@ -261,9 +261,9 @@ class MLDSGAMCompare:
         
         ranova = r('anova')
         
-        if printflag: print r['summary'](m_gam2)
+        if printflag: print(r['summary'](m_gam2))
         anovares = ranova(m_gam, m_gam2, test = "Chisq") 
-        if printflag: print anovares   # ANOVA correctly detect a better fit if separated.
+        if printflag: print(anovares)   # ANOVA correctly detect a better fit if separated.
         
         def predict(i):
             r('m0.pred <- predict(m.gam2, newdata = nd%d, type = "link")' % i) # predict from m.gam object, using new data

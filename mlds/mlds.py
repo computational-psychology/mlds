@@ -143,19 +143,19 @@ class MLDSObject:
 
 
     def printinfo(self):
-        print "MLDSObject based on file %s " % self.filename
+        print("MLDSObject based on file %s " % self.filename)
         if self.status==0:
-            print "not yet run"
+            print("not yet run")
         elif self.status==1 or self.status==2:
-            print "   stimulus: ", self.stim
-            print "   scale: ", self.scale
-            print "   sigma: ", self.sigma
+            print("   stimulus: ", self.stim)
+            print("   scale: ", self.scale)
+            print("   sigma: ", self.sigma)
 
         if self.status==2:
-            print "   ci 2.5%: ", self.ci95[0]
-            print "   ci 97.5%: ", self.ci95[1]
+            print("   ci 2.5%: "), self.ci95[0]
+            print("   ci 97.5%: "), self.ci95[1]
             if self.correctedCI:
-                print "corrected CIs"
+                print("corrected CIs")
 
     def getRdatafilename(self, force_refit=False):
         
@@ -263,24 +263,24 @@ class MLDSObject:
 
         # run MLDS analysis in R
         if self.verbose:
-            print "executing in R..."
+            print("executing in R...")
 
         proc = subprocess.Popen(["R", "--no-save"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         for line in self.seq:
-            proc.stdin.write(line)
+            proc.stdin.write(line.encode())
         (out, err) = proc.communicate()
 
         self.returncode = proc.returncode
 
         if self.verbose:
-            print "return code: %d" % self.returncode
-            print "output: "
-            print out
+            print("return code: %d" % self.returncode)
+            print("output: ")
+            print(out)
 
         if self.returncode==0:
             self.readresults()
         else:
-            print err
+            print(err)
             raise RuntimeError("Error in execution within R (see error output above)")
 
 
@@ -292,11 +292,16 @@ class MLDSObject:
         ## reading results
         if self.returncode == 0:
             if self.verbose:
-                print "reading MLDS results"
+                print("reading MLDS results")
             data = []
-            csvfile = open(self.mldsfile, 'rb')
+            #csvfile = open(self.mldsfile, 'rb')
+            #reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+            #reader.next(reader)
+            
+            csvfile = open(self.mldsfile, 'r')
             reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-            reader.next()
+            next(reader)           
+            
             for row in reader:
                 data.append(np.asarray(row))
             csvfile.close()
@@ -318,7 +323,7 @@ class MLDSObject:
                 self.status = 2
 
         else:
-            print "error in execution"
+            print("error in execution")
             self.status = -1
 
         if not self.keepfiles:
@@ -373,22 +378,22 @@ class MLDSObject:
 
             # run MLDS analysis in R
             if self.verbose:
-                print "executing in R..."
+                print("executing in R...")
 
             proc = subprocess.Popen(["R", "--no-save"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             for line in seqdiag:
-                proc.stdin.write(line)
+                proc.stdin.write(line.encode())
             (out, err) = proc.communicate()
 
             self.returncode = proc.returncode
 
             if self.verbose:
-                print out
+                print(out)
 
             if self.returncode == 0:
                 self.readdiags()
             else:
-                print err
+                print(err)
                 raise RuntimeError("Error in execution within R (see error output above)")
 
 
@@ -494,7 +499,7 @@ class MLDSObject:
     ###################################################################################################
     def setsubset(self, cuts, write=False):
         if self.residuals==None:
-            print "subset aborted: you should run diagnostics first"
+            print("subset aborted: you should run diagnostics first")
             return
         else:
             invalid = np.logical_or(self.residuals < cuts[0], self.residuals > cuts[1])
@@ -511,12 +516,12 @@ class MLDSObject:
         
             dest.to_csv(fname,  sep=' ', index=False)
             
-            print "subset created, new filename: %s" % fname
-            print "you must now run() or load() to update results"
+            print("subset created, new filename: %s" % fname)
+            print("you must now run() or load() to update results")
             
         else:
-            print "object filename updated"
-            print "run() or load() to update results"
+            print("object filename updated")
+            print("run() or load() to update results")
         
 
         self.filename = fname
@@ -548,7 +553,7 @@ class MLDSObject:
 
         if self.verbose:
 
-            print out
+            print(out)
 
         #print self.returncode
         if writetofile:
@@ -559,9 +564,9 @@ class MLDSObject:
         try:
             self.readgamlam( gamlamfile )
         except:
-            print "Error"
-            print out
-            print err
+            print("Error")
+            print(out)
+            print(err)
             raise RuntimeError("Error in execution within R (see error output above)")
 
 
@@ -599,11 +604,11 @@ class MLDSObject:
         if not os.path.isfile(self.Rdatafile):
             self.saveRobj = True
             if self.verbose:
-                print ".. running analysis.."
+                print(".. running analysis..")
             self.run()
         else:
             if self.verbose:
-                print "reading results from MLDS file"
+                print("reading results from MLDS file")
 
         # scale and bootstrap
         self.readobjectresults()
@@ -785,10 +790,10 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff',
             if secondstim=='indep':
                 try:
                     f1, f2, f2b, f3 =  sensoryrep([s1, s2, s2, s3])
-                    if debug: print "vector form, stimulus 2 drawn twice."
+                    if debug: print("vector form, stimulus 2 drawn twice.")
 
                 except:
-                    if debug: print "non vector form"
+                    if debug: print("non vector form")
                     f1 = sensoryrep(s1)
                     f2 = sensoryrep(s2)
                     f2b = sensoryrep(s2)
@@ -799,9 +804,9 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff',
                 try:
                     f1, f2, f3 = sensoryrep([s1, s2, s3])
                     f2b = f2
-                    if debug: print "vector form, stimulus 2 drawn once."
+                    if debug: print("vector form, stimulus 2 drawn once.")
                 except:
-                    if debug: print "non vector form"
+                    if debug: print("non vector form")
                     f1= sensoryrep(s1)
                     f2 = sensoryrep(s2)
                     f2b = f2
@@ -812,7 +817,7 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff',
 
             ##  check noise sources
             if (sensoryrep.sigmamin!=0 or sensoryrep.sigmamax!=0) and noisetype=='decision':
-                print "Note: you have set decision noise AND a sensory function with noise"
+                print("Note: you have set decision noise AND a sensory function with noise")
 
 
             # decision variable
@@ -848,9 +853,9 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff',
     rfl.close()
 
     if debug and decisionrule == 'diff':
-        print "diff"
+        print("diff")
     elif debug and decisionrule == 'absdiff':
-        print "absdiff"
+        print("absdiff")
 
     return filename
 
