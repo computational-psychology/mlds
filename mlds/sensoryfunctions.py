@@ -114,7 +114,7 @@ class Cue2DSensoryFunc:
         try:
             self.rawcue = np.load(cuefilename)
         except:
-            print "Error loading cue file"
+            print("Error loading cue file")
             raise
 
         # normalize if asked
