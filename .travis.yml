@@ -6,11 +6,11 @@ virtualenv:
   system_site_packages: true
   
 before_install:
-  - sudo add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu cosmic-cran35/"
+  - sudo add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/"
   - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
   - sudo apt-get update
-  - sudo apt-get install -y --force-yes r-base 
-  - sudo apt-get install -y --force-yes python-numpy python-scipy
+  - sudo apt-get install -y r-base 
+  - sudo apt-get install -y python-numpy python-scipy
   - sudo R CMD INSTALL mlds/CRAN/MLDS_0.4.1.tar.gz
   - sudo R CMD INSTALL mlds/CRAN/psyphy_0.1-9.tar.gz
 
