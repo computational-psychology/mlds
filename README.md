@@ -1,5 +1,4 @@
-Python wrapper for MLDS R package .. image:: https://travis-ci.org/TUBvision/mlds.svg?branch=master
-    :target: https://travis-ci.org/TUBvision/mlds
+Python wrapper for MLDS R package 
 
 Contents
 ========
