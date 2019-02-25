@@ -1,4 +1,5 @@
 Python wrapper for MLDS R package 
+[![Build Status](https://travis-ci.org/TUBvision/mlds.svg?branch=master)](https://travis-ci.org/TUBvision/mlds)
 
 Contents
 ========
@@ -48,4 +49,4 @@ Contact
 Questions? Feedback? Don't hesitate to fork, pull request, or 
 contact me (guillermo@bccn-berlin.de)
 
-This repository has so far only been tested in Linux (Debian Wheezy and Jessie, Ubuntu) 
+This repository has so far only been tested in Linux (Debian Jessie and Stretch, Ubuntu Xenial) 
