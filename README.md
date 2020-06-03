@@ -29,7 +29,7 @@ Installation
 ============
 
 - Install all requirements.
-- Clone the repository from github  (*git clone https://github.com/TUBvision/mlds.git*) 
+- Clone the repository from github  (*git clone https://github.com/computational-psychology/mlds.git*) 
 - For adding multi-thread functionality, also install the package *snow* in R.
 - Run the tests: go to the directory *mlds/mlds/test* and execute: *python -m unittest discover*. All tests should pass.
 
@@ -47,6 +47,6 @@ Usage examples
 Contact
 =======
 Questions? Feedback? Don't hesitate to fork, pull request, or 
-contact me (guillermo@bccn-berlin.de)
+contact me (guillermo.aguilar@mail.tu-berlin.de)
 
 This repository has so far only been tested in Linux (Debian Jessie and Stretch, Ubuntu Xenial) 
