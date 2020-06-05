@@ -8,7 +8,7 @@ Unittests for mlds module
 import sys, os
 sys.path.append('../')
 import mlds
-import mlds_gam
+#import mlds_gam
 import unittest
 import numpy as np
 
@@ -63,7 +63,7 @@ class TestMLDSClass(unittest.TestCase):
     def test_bootstrap(self):
         obs = mlds.MLDSObject('test.csv', boot=True, save=False)
         obs.parallel=False
-        obs.nsamples = 100
+        obs.nsamples = 1000
         obs.initcommands()
         obs.run()
         
@@ -74,7 +74,7 @@ class TestMLDSClass(unittest.TestCase):
         obs = mlds.MLDSObject('test.csv', boot=True, save=False)
         obs.correctedCI=True
         obs.parallel=False
-        obs.nsamples = 100
+        obs.nsamples = 1000
         obs.run()
         
         np.testing.assert_almost_equal(obs.ci95, ci95_corrected, decimal=d)
@@ -182,6 +182,7 @@ class TestMLDSClass(unittest.TestCase):
     def test_dimension_unit(self):
         obs = mlds.MLDSObject('test.csv', boot=False, save=False, 
                 dimension_unit='stim') 
+        #obs.saveRcommands()
         obs.run()
         
         
@@ -194,43 +195,43 @@ class TestMLDSClass(unittest.TestCase):
         
         
         
-#######################################################################
-class TestMLDSComparison(unittest.TestCase):
+# #######################################################################
+# class TestMLDSComparison(unittest.TestCase):
         
 
-    def test_gam_run4(self):
+#     def test_gam_run4(self):
         
-        files = ['0.csv', '1.csv', '2.csv', '3.csv']
-        gam = mlds_gam.MLDSGAMCompare(files)
-        gam.run()
+#         files = ['0.csv', '1.csv', '2.csv', '3.csv']
+#         gam = mlds_gam.MLDSGAMCompare(files)
+#         gam.run()
         
-    def test_gam_run3(self):
+#     def test_gam_run3(self):
         
-        files = ['1.csv', '2.csv', '3.csv']
-        gam = mlds_gam.MLDSGAMCompare(files)
-        gam.run()
+#         files = ['1.csv', '2.csv', '3.csv']
+#         gam = mlds_gam.MLDSGAMCompare(files)
+#         gam.run()
         
-    def test_gam_run2(self):
+#     def test_gam_run2(self):
         
-        files = ['1.csv', '2.csv']
-        gam = mlds_gam.MLDSGAMCompare(files)
-        gam.run()
+#         files = ['1.csv', '2.csv']
+#         gam = mlds_gam.MLDSGAMCompare(files)
+#         gam.run()
         
-    def test_gam_run1(self):
+#     def test_gam_run1(self):
         
-        files = ['0.csv']
-        gam = mlds_gam.MLDSGAMCompare(files, dividedby=2)
-        gam.run()
+#         files = ['0.csv']
+#         gam = mlds_gam.MLDSGAMCompare(files, dividedby=2)
+#         gam.run()
         
-    def test_gam_dividedby(self):
+#     def test_gam_dividedby(self):
         
-        with self.assertRaises(Exception):
-            mlds_gam.MLDSGAMCompare(['0.csv'])
+#         with self.assertRaises(Exception):
+#             mlds_gam.MLDSGAMCompare(['0.csv'])
             
-    def test_gam_argument(self):
+#     def test_gam_argument(self):
         
-        with self.assertRaises(Exception):
-            mlds_gam.MLDSGAMCompare('0.csv')
+#         with self.assertRaises(Exception):
+#             mlds_gam.MLDSGAMCompare('0.csv')
 
 
         
