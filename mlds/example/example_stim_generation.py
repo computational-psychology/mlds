@@ -18,11 +18,11 @@ stim = np.linspace(0.0, 1.0, 11)
 
 
 ## generating quadruples
-quads, indx, topbot = mlds.generate_quadruples(stim)
+quads, indxq, invordq = mlds.generate_quadruples(stim)
 
 
 ## generating triads
-triads, indxt, topbot = mlds.generate_triads(stim)
+triads, indxt, invordt = mlds.generate_triads(stim)
 
 
 # EOF

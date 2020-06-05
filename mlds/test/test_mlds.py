@@ -146,7 +146,7 @@ class TestMLDSClass(unittest.TestCase):
         obs.parallel=False
         obs.nsamples = 250
         obs.run()
-        obs.rundiagnostics()
+        obs.rundiagnostics(saveresiduals=saveresiduals)
                 
         self.assertAlmostEqual(obs.prob, prob, places=1)    
         os.remove(obs.Rdatafile)

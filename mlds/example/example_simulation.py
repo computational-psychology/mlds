@@ -42,28 +42,26 @@ fname = mlds.simulateobserver(fn, stim, nblocks=15)
 
 #######
 # 4. Finally, we want to estimate the scale from the simulated data.
-obs = mlds.MLDSObject(fname, boot=True, standardscale=False)
+obs = mlds.MLDSObject(fname, boot=True, standardscale=False, verbose=True)
 obs.load()  # this takes a while as bootstrap is done
-obs.printinfo
+obs.printinfo()
 
 # we can plot the scale
-# the shape of the scale should coincide with a power function with 
-# exponent 2
+# the shape of the scale should coincide with a power function with exponent 2
 mlds.plotscale(obs)
 plt.xlim([-0.1, 1.1])
 plt.show()
 
 # and the noise estimated by MLDS should be the double of the noise
 # introduced at the sensory level in the simulation
-print "noise estimate from MLDS: %.3f" % (1/obs.mns[-1])
-print "which must be the double of the sensory noise %.3f" % fn.sigmamax
-
+print("noise estimate from MLDS: %.3f" % (1 / obs.mns[-1]))
+print("which must be the double of the sensory noise %.3f" % fn.sigmamax)
 
 # finally, GoF measures should be OK, as we are simulating an observer
 # that actually performs the decision model assumed by MLDS
-# obs.rundiagnostics()
-# print "GoF measures:"
-# print 'AIC: %f, DAF: %f' % (obs.AIC, obs.DAF)
-# print 'p-val: %f' % obs.prob
+obs.rundiagnostics()
+print("GoF measures:")
+print('AIC: %f, DAF: %f' % (obs.AIC, obs.DAF))
+print('p-val: %f' % obs.prob)
 
 # EOF

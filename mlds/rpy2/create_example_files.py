@@ -5,7 +5,7 @@ Created on Fri Oct 10 16:09:39 2014
 @author: guille
 """
 
-import sim_scales_powerfn 
+import sim_scales_powerfn
 import os
 import numpy as np
 

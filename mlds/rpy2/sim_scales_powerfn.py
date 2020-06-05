@@ -31,7 +31,7 @@ def simulateobserver(func, sigma, stim, nblocks=1, gamma=1):
 
     ## where to save the results
     filename = str(uuid.uuid4()) + '.csv'
-    rfl = open( filename, 'wb')
+    rfl = open( filename, 'w')
     writer = csv.writer(rfl, delimiter=' ')
     writer.writerow(['Trial', 'Response', 's1', 's2', 's3', 'invord', 'i1', 'i2', 'i3'])
     
@@ -79,8 +79,8 @@ def simulateobserver(func, sigma, stim, nblocks=1, gamma=1):
                 response=0
             else:
                 response=None
-                print "None"
-            
+                print("None")
+
             if order[t]==1:
                 response = int(not response)
             writer.writerow([t, response, "%.2f" % triads[t][0], "%.2f" % triads[t][1], "%.2f" % triads[t][2], order[t], indxt[t][0]+1, indxt[t][1]+1, indxt[t][2]+1])
@@ -117,10 +117,10 @@ def runsimulation(sigmas, nblocks, nruns, plotflag=True, gamma=2, N=11):
         # from unconstrained scales, sigma by design is 1, leaving the maximum of the scale as 1/sigma. Then,
         # sigma can be extracted from an uncontrained scale by simply calculating 1/ the scale maximum.
         shat = 1/ scales[j][:,-1].mean()
-        
-        print "sigma2 estimated: %.4f" % shat**2
-        print "sigma2 combined: %.4f" % (4*sigma**2)
-        
+
+        print("sigma2 estimated: %.4f" % shat ** 2)
+        print("sigma2 combined: %.4f" % (4 * sigma ** 2))
+
         if plotflag:
             plt.plot(stim, psi(stim, gamma) * 1/sqrt(4*sigma**2),'k--')
         
@@ -138,13 +138,13 @@ def runsimulation(sigmas, nblocks, nruns, plotflag=True, gamma=2, N=11):
 
 
 # displaying    
-#s = np.linspace(0, 1, 100) # stimulus values
-#gammas = np.linspace(1,5,11) # psi response 
+# s = np.linspace(0, 1, 100) # stimulus values
+# gammas = np.linspace(1,5,11) # psi response
 #
-#plt.figure()
-#for i, g in enumerate(gammas):
+# plt.figure()
+# for i, g in enumerate(gammas):
 #    plt.plot(s, psi(s, g), label="$\gamma$ = %.2f" % g)
-#plt.legend(loc=2)
-#plt.show()
+# plt.legend(loc=2)
+# plt.show()
 
     

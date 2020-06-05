@@ -18,7 +18,7 @@ mgcv = importr("mgcv")
 
 r = robjects.r
 
-#files = ['first.csv', 'second.csv', 'thrid.csv']
+#files = ['first.csv', 'second.csv', 'third.csv']
 #files = ['first.csv', 'second.csv']
 files = ['0.csv', '1.csv', '2.csv', '3.csv']
 
@@ -69,7 +69,7 @@ dfst = r('dfst[attr(dfst, "invord"), 1] <- 1 - dfst[attr(dfst, "invord"), 1]') #
 by_mat = r('by.mat <- matrix(c(1, -2, 1), nc = 3, nr = nrow(dfst), byrow = TRUE)')
 S_mat =  r('S.mat <- with(dfst, cbind(S1 = S1, S2 = S2, S3 = S3))')
 m_gam =  r('m.gam <- gam(resp ~ s(S.mat, k = k, by = by.mat), family = binomial(probit), data = dfst)')
-print m_gam
+print(m_gam)
 
 # 
 svec = r('svec <- seq(0, 1, len = 100)')  # stimulus vector
@@ -156,7 +156,7 @@ elif len(files)==2:
 
 
 else:
-    raise('not implemented for more than 4 files (yet)')
+    raise NotImplementedError('not implemented for more than 4 files (yet)')
 
 
 # calling GAM                         
@@ -164,10 +164,11 @@ m_gam2 = r(gamcall)
 
 ranova = r('anova')
 
-print r['summary'](m_gam2)
-anovares = ranova(m_gam, m_gam2, test = "Chisq") 
-print anovares   # ANOVA correctly detect a better fit if separated.
-print anovares[4]  # p- value
+print(r['summary'](m_gam2))
+anovares = ranova(m_gam, m_gam2, test = "Chisq")
+print(anovares)  # ANOVA correctly detect a better fit if separated.
+print(anovares[4])  # p- value
+
 
 def predict(i):
     r('m0.pred <- predict(m.gam2, newdata = nd%d, type = "link")' % i) # predict from m.gam object, using new data

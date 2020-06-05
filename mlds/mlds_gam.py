@@ -39,7 +39,7 @@ class MLDSGAMCompare:
         
         self.dividedby = dividedby
         
-        if len(files)==1 and dividedby==None:
+        if len(files)==1 and dividedby is None:
             raise Exception('For one file argument, dividedby > 1 must be provided')
         if len(files)==1:
             assert(dividedby > 1)
@@ -111,7 +111,7 @@ class MLDSGAMCompare:
         block= 'by.mat[%d:%d,]'
         noblock = 'by.mat[%d:%d, ] * 0'
         
-        if len(self.files) > 1:
+        if 1 < len(self.files) <= 4:
             nparts = len(self.files)
             
             # determining indices where to split dataframe
@@ -132,7 +132,7 @@ class MLDSGAMCompare:
                 c+=1
                 
             
-        elif len(self.files)>4:
+        else:
             raise Exception('not implemented for more than 4 files (yet)')
         
         if nparts==6:
