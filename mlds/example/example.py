@@ -16,18 +16,18 @@ import mlds
 
 ## creating MLDS object and running analysis
 obs = mlds.MLDSObject('data.csv', standardscale = False,
-                       boot=True)
+                      boot=True, verbose=True)
 
 print("Running analysis...")
-obs.load()  # load results from .MLDS file if it exists; otherwise runs the analysis
 # obs.run() # always runs the analysis, overwrites the .MLDS file if exists.
+obs.load()  # loads results from .MLDS file; runs the analysis if doesn't exist
 
 
 ## plotting
 print("plotting..")
 plt.figure()
 plt.errorbar(obs.stim, obs.mns, yerr=abs(obs.ci95 - obs.mns), color='#4C72B0',
-                linewidth=2, elinewidth=2 )
+             linewidth=2, elinewidth=2 )
 
 plt.xlabel('Stimulus')
 plt.ylabel('Difference Scale')
@@ -37,17 +37,19 @@ plt.show()
 
 ## if you want, you can create an .R file containing all the R commands
 # that are run in the background
-# obs.saveRcommands()
+obs.saveRcommands()
 
 
 ## Goodness of fit
 print("GoF measures:")
 print('AIC: %f, DAF: %f' % (obs.AIC, obs.DAF))
 # if you want to run deviance bootstrap analysis, uncomment the lines below
-# print "..deviance analysis ..."
+# print("..deviance analysis ...")
 # obs.rundiagnostics()
-# print 'p-val: %f' % obs.prob
-
+# print('p-val: %f' % obs.prob)
+# # plotting deviance
+# fig = obs.plotdiags()
+# fig.show()
 
 #######################################################################
 ## important values that are accesible directly

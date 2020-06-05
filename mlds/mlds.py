@@ -7,6 +7,7 @@ rev. Aug 2014: diagnostics added, saving to R datafile.
 rev. Jan 2015: bootstrap samples can be accessed.
 rev. Feb 2015: adds plot diagnostics, as in R.
 """
+from typing import Any, Tuple
 
 import numpy as np
 import os, sys
@@ -43,7 +44,7 @@ class MLDSObject:
     boot -> calculate bootstrap estimates (default : False) \n
     keepfiles -> keep temporary R and csv files (default: False) \n
     standardscale -> calculate perceptual scale in range [0,1] (default: True)\n
-    getlinearscale -> calculate linear scale as if differencing perfecly (default=False)\n
+    getlinearscale -> calculate linear scale as if differencing perfectly (default=False)\n
     save -> save results into an R datafile\n
 
     Methods
@@ -81,7 +82,7 @@ class MLDSObject:
             self.dimension_unit = ''
         else:
             self.dimension_unit = dimension_unit
-            
+
         self.keepfiles = keepfiles
         self.standardscale = standardscale
         self.getlinearscale = getlinearscale  # I will deprecate this
@@ -93,14 +94,14 @@ class MLDSObject:
 
         self.filename = filename  # csv datafile containing observer responses
         self.rootname = self.filename.split('.')[0]
-
+        self.Rdatafile = None
         self.getRdatafilename()
-        
+
         # default column names in the text file to be read
-        self.colnames = {'stim' : ['s1', 's2', 's3'], 
+        self.colnames = {'stim' : ['s1', 's2', 's3'],
                          'response': 'Response'}
-        
-        
+
+
         # scale and noise param, stimulus vector
         self.scale = None
         self.lscale = None  # deprecating this
@@ -118,6 +119,7 @@ class MLDSObject:
         self.sigmabt = None
 
         # diagnostic measures
+        self.diagnostics = None
         self.AIC = None
         self.DAF = None
         self.prob = None
@@ -127,15 +129,16 @@ class MLDSObject:
         ##
         self.seq = []  # sequence of commands in R
         self.mldsfile = ''
+        self.GLMobject = None
         self.returncode = -1
 
-        # parallel execution of bootsrap
+        # parallel execution of bootstrap
         ncpus = multiprocessing.cpu_count()
         if ncpus == 1:
             self.parallel= False
         else:
             self.parallel = True
-            self.workers = ['"localhost"']* ncpus
+            self.workers = ['"localhost"'] * ncpus
             self.master = '"localhost"'
 
         # initialize commands for execution in R
@@ -158,9 +161,8 @@ class MLDSObject:
                 print("corrected CIs")
 
     def getRdatafilename(self, force_refit=False):
-        
-        s = []
-        s.append(self.rootname)
+
+        s = [self.rootname]
         if not self.dimension_unit=='':
             s.append(self.dimension_unit)
 
@@ -170,12 +172,12 @@ class MLDSObject:
             s.append('unnorm')
 
         s.append(self.linktype)
-        
+
         if not (self.linkgam == 0.0 and self.linklam == 0.0) or force_refit:
             s.append('refit')
 
         self.Rdatafile = "_".join(s) + '.MLDS'
-         
+
 
     ###################################################################################################
     def initcommands(self):
@@ -192,7 +194,7 @@ class MLDSObject:
                 "results <- with(d.df, data.frame(resp = %s, S1= match(%s, stim), S2=match(%s, stim), S3=match(%s, stim)))\n" % (self.colnames['response'], self.colnames['stim'][0], self.colnames['stim'][1], self.colnames['stim'][2]),
                 "results <- as.mlbs.df(results, st=stim)\n"]
 
-        # still to be debug is the fact that passing a link function with gamma = lamda = 0 gives different results as passing the link function as a word.
+        # still to be debug is the fact that passing a link function with gamma = lambda = 0 gives different results as passing the link function as a word.
         if self.linkgam == 0.0 and self.linklam == 0:
             seq.append("obs.mlds <- mlds(results, lnk='%s')\n" % self.linktype)
         else:
@@ -294,14 +296,11 @@ class MLDSObject:
             if self.verbose:
                 print("reading MLDS results")
             data = []
-            #csvfile = open(self.mldsfile, 'rb')
-            #reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-            #reader.next(reader)
-            
+
             csvfile = open(self.mldsfile, 'r')
             reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-            next(reader)           
-            
+            next(reader)
+
             for row in reader:
                 data.append(np.asarray(row))
             csvfile.close()
@@ -347,19 +346,19 @@ class MLDSObject:
 
             seqdiag = ["library(MLDS)\n",
             "load('%s')\n" % self.Rdatafile]
-            
-            
+
+
             if self.parallel:
                 seqdiag.extend(["library(snow)\n",
                 "source(paste('%s', '/pbinom.diagnostics.R', sep=''))\n" % os.path.dirname(sys.modules[__name__].__file__),
                 "workers <- c(%s)\n" % ",".join(self.workers),
                 "master <- %s\n" % self.master,
                 "obs.diag.prob <- pbinom.diagnostics (obs.mlds, %d, workers=workers, master=master)\n" % self.nsamples])
-                
+
             else:
                 seqdiag.extend(["obs.diag.prob <- binom.diagnostics (obs.mlds, %d)\n" % self.nsamples])
-            
-            
+
+
             if not saveresiduals:
                 # I take 95% CI envelopes and necesary variables to plot GoF,
                 # and I get rid of all residuals data that is very heavy.
@@ -373,8 +372,8 @@ class MLDSObject:
                                 "obs.diag.prob$nsim <- nsim\n",
                                 "obs.diag.prob$n <- n\n"])
             seqdiag.append('save(results, obs.mlds, obs.bt, obs.mns, obs.low, obs.high, obs.sd, samples, obs.diag.prob, file="%s")\n' % self.Rdatafile)
-           
-            
+
+
 
             # run MLDS analysis in R
             if self.verbose:
@@ -388,6 +387,7 @@ class MLDSObject:
             self.returncode = proc.returncode
 
             if self.verbose:
+                print("output:")
                 print(out)
 
             if self.returncode == 0:
@@ -404,7 +404,7 @@ class MLDSObject:
         from rpy2.robjects.packages import importr
 
         ### loading library
-        rmlds = importr("MLDS")
+        importr("MLDS")
 
         ### loading file
         objs = robjects.r['load']("%s" % self.Rdatafile)
@@ -441,7 +441,7 @@ class MLDSObject:
             self.prob = list(self.diagnostics[self.diagnostics.names.index('p')])[0]
 
         #else:
-        #   print "bootstrap diagnostics are not yet calculated"
+            # print("bootstrap diagnostics are not yet calculated")
 
     ###################################################################################################
     def plotdiags(self, width=10, height=5):
@@ -449,8 +449,7 @@ class MLDSObject:
         if self.diagnostics is not None:
 
             import matplotlib.pyplot as plt
-            import matplotlib.ticker as ticker
-
+            # import matplotlib.ticker as ticker
 
             NumRuns = np.array(self.diagnostics[self.diagnostics.names.index('NumRuns')])
             #resid = np.array(self.diagnostics[1])
@@ -460,34 +459,33 @@ class MLDSObject:
             #nsim = resid.shape[0]
             #n = resid.shape[1]
             n = int(self.diagnostics[self.diagnostics.names.index('n')][0])
-            
+
             lowc = self.diagnostics[self.diagnostics.names.index('lowc')]
             highc = self.diagnostics[self.diagnostics.names.index('highc')]
-            
+
             cdfx = (np.arange(1, n + 1, 1) - 0.5) / n
 
-            fig = plt.figure(figsize=(width, height))
-            ax = plt.subplot(1, 2, 1)
-            ax.set_xlabel("Deviance residual")
-            ax.set_ylabel("Cumulative density function")
-            ax.plot(np.sort(Obs_resid), cdfx, 'o', markersize=1,
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(width, height))
+
+            ax1.set_xlabel("Deviance residual")
+            ax1.set_ylabel("Cumulative density function")
+            ax1.plot(np.sort(Obs_resid), cdfx, 'o', markersize=1,
                      markeredgecolor='k', markerfacecolor='k')
-            ax.plot(lowc, cdfx, '-', color='#4C72B0', linewidth=1)
-            ax.plot(highc, cdfx, '-', color='#4C72B0', linewidth=1)
-            ax.spines['right'].set_visible(False)
-            ax.spines['top'].set_visible(False)
-            ax.tick_params(right=False, top=False)
+            ax1.plot(lowc, cdfx, '-', color='#4C72B0', linewidth=1)
+            ax1.plot(highc, cdfx, '-', color='#4C72B0', linewidth=1)
+            ax1.spines['right'].set_visible(False)
+            ax1.spines['top'].set_visible(False)
+            ax1.tick_params(right=False, top=False)
             plt.locator_params(axis = 'y', nbins=4)
 
-            ax = plt.subplot(1, 2, 2)
-            ax.hist(NumRuns, bins=25, normed=True)
-            ax.axvline(ObsRuns, color='k', linewidth=1)
-            ax.set_xlabel("Number of Runs")
-            ax.set_ylabel("Frequency")
-            ax.spines['right'].set_visible(False)
-            ax.spines['top'].set_visible(False)
-            ax.tick_params(right=False, top=False)
-            plt.locator_params(axis = 'y', nbins=3)
+            ax2.hist(NumRuns, bins=25, density=True)
+            ax2.axvline(ObsRuns, color='k', linewidth=1)
+            ax2.set_xlabel("Number of Runs")
+            ax2.set_ylabel("Frequency")
+            ax2.spines['right'].set_visible(False)
+            ax2.spines['top'].set_visible(False)
+            ax2.tick_params(right=False, top=False)
+            plt.locator_params(axis = 'y', nbins=4)
 
             return fig
 
@@ -498,7 +496,7 @@ class MLDSObject:
 
     ###################################################################################################
     def setsubset(self, cuts, write=False):
-        if self.residuals==None:
+        if self.residuals is None:
             print("subset aborted: you should run diagnostics first")
             return
         else:
@@ -509,20 +507,20 @@ class MLDSObject:
 
         rootname = self.filename.split('.')[0]
         fname = "%s_subset.csv" % rootname
-        
+
         if write:
             orig = pd.read_csv( self.filename , sep=" ")
             dest = orig[np.logical_not(invalid)]
-        
+
             dest.to_csv(fname,  sep=' ', index=False)
-            
+
             print("subset created, new filename: %s" % fname)
             print("you must now run() or load() to update results")
-            
+
         else:
             print("object filename updated")
             print("run() or load() to update results")
-        
+
 
         self.filename = fname
         self.rootname = self.filename.split('.')[0]
@@ -570,11 +568,12 @@ class MLDSObject:
             raise RuntimeError("Error in execution within R (see error output above)")
 
 
+    # TODO: values never used
     ##########################################################################
     def readgamlam(self, gamlamfile):
 
         data = []
-        csvfile = open(gamlamfile, 'rb')
+        csvfile = open(gamlamfile, 'r')
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
         reader.next()
         for row in reader:
@@ -640,7 +639,7 @@ class MLDSObject:
 
         self.stim = np.array(obsmlds[1])
         self.status=1
-        
+
         # GLM object
         self.GLMobject = obsmlds[obsmlds.names.index('obj')]
 
@@ -665,7 +664,7 @@ class MLDSObject:
 
             self.scalesbt = np.vstack((anchor, arr))
             self.sigmabt = np.array(bt)[-1,:]
-            
+
             self.nsamples = self.scalesbt.shape[1]
 
             self.status=2
@@ -681,7 +680,7 @@ class MLDSObject:
 
 
 ###############################################################################
-########################## utilities for this class  #########################
+########################## utilities for this class  ##########################
 
 def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1, **kargs):
 
@@ -699,7 +698,9 @@ def plotscale(s, observer="", color='blue', offset=0, linewidth=1, elinewidth=1,
             yerr = abs(s.ci95 - s.mns)
         elif s.ci95.shape[0]==1:
             yerr = s.ci95
-        plt.errorbar(stimoff, s.mns, yerr= yerr, fmt="none", ecolor= color, elinewidth=elinewidth)
+        else:
+            raise RuntimeError("Unexpected shape of CI")
+        plt.errorbar(stimoff, s.mns, yerr=yerr, fmt="none", ecolor= color, elinewidth=elinewidth)
         plt.plot(s.stim, s.mns, color= color, label=label, linewidth=linewidth, **kargs)
 
     else:
@@ -767,7 +768,7 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff',
 
     # where to save the results
     filename = str(uuid.uuid4()) + '.csv'
-    rfl = open(filename, 'wb')
+    rfl = open(filename, 'w')
     writer = csv.writer(rfl, delimiter=' ')
     writer.writerow(['Trial', 'Response', 's1', 's2', 's3', 'invord', 'i1', 'i2', 'i3'])
 
@@ -862,7 +863,7 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff',
 
 ###############################################################################
 ###############################################################################
-########################## utilities for experiments #########################
+########################## utilities for experiments ##########################
 ## Utilities for MLDS  experiments
 # @author: G. Aguilar, Nov 2013
 
@@ -905,7 +906,7 @@ def generate_quadruples(stim):
     quadruples = [stim[t]   for t in allTrials]
 
     # returns the quadruples, and the indices
-    return (quadruples, allTrials, topbot)
+    return quadruples, allTrials, topbot
 
 
 
@@ -950,7 +951,7 @@ def generate_triads(stim):
     triads = [stim[t]   for t in allTrials]
 
     # returns the triads, and the indices
-    return (triads, allTrials, topbot)
+    return triads, allTrials, topbot
 
 
 ###############################################################################
