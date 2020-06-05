@@ -14,7 +14,6 @@ before_install:
 install:
   - pip3 install numpy
   - pip3 install scipy
-  - pip3 install rbase
   - pip3 install rpy2
 
 # command to run tests
