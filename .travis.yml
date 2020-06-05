@@ -1,13 +1,13 @@
 language: python
-dist: xenial
+dist: bionic
 python:
-  - "3.5"
+  - "3.7"
 
 virtualenv:
   system_site_packages: true
   
 before_install:
-  - sudo add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/"
+  - sudo add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/"
   - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
   - sudo apt-get update
   - sudo apt-get install -y r-base python3-numpy python3-scipy
