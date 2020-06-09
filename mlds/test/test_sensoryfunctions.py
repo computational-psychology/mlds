@@ -5,9 +5,7 @@ Unittests for sensoryfunctions module
 @author: G. Aguilar, Sep 2015
 """
 
-import sys
-sys.path.append('../')
-from sensoryfunctions import PowerSensoryFunc, QuadraticSensoryFunc
+from mlds.sensoryfunctions import PowerSensoryFunc, QuadraticSensoryFunc
 import unittest
 import numpy as np
 

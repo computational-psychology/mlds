@@ -5,12 +5,15 @@ Unittests for mlds module
 @author: G. Aguilar, Oct 2014
 """
 
-import sys, os
-sys.path.append('../')
+import os
 import mlds
-#import mlds_gam
 import unittest
 import numpy as np
+
+base_path = os.path.dirname(__file__)
+def abspath(fname):
+    return os.path.join(base_path, fname)
+
 
 # expected results from test.csv
 scale = np.array([ 0. , 0.0203168884, 0.0657919702, 0.1426437, 0.1758397487, 0.2587451112, 0.3697451673, 0.4686494742, 0.6344124339, 0.7298032188, 1. ])
@@ -53,7 +56,7 @@ class TestMLDSClass(unittest.TestCase):
         
         
     def test_simple(self):
-        obs = mlds.MLDSObject('test.csv', boot=False, save=False)       
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=False, save=False)
         obs.run()
         
         np.testing.assert_almost_equal(obs.scale, scale, decimal= d)
@@ -61,7 +64,7 @@ class TestMLDSClass(unittest.TestCase):
     
     #@unittest.skip("skipping bootstrap, saving time")
     def test_bootstrap(self):
-        obs = mlds.MLDSObject('test.csv', boot=True, save=False)
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=True, save=False)
         obs.parallel=False
         obs.nsamples = 1000
         obs.initcommands()
@@ -71,7 +74,7 @@ class TestMLDSClass(unittest.TestCase):
     
     #@unittest.skip("skipping bootstrap, saving time")
     def test_bootstrap_correctedCI(self):
-        obs = mlds.MLDSObject('test.csv', boot=True, save=False)
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=True, save=False)
         obs.correctedCI=True
         obs.parallel=False
         obs.nsamples = 1000
@@ -82,39 +85,39 @@ class TestMLDSClass(unittest.TestCase):
         
         
     def test_Rdatafilename(self):
-        obs = mlds.MLDSObject('test.csv', boot=False, save=False) 
-                
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=False, save=False)
+        print(obs.rootname, obs.filename)
         obs.getRdatafilename()
-        assert(obs.Rdatafile == 'test_norm_probit.MLDS')
+        assert(obs.Rdatafile == abspath('test_norm_probit.MLDS'))
 
 
 
     def test_Rdatafilename2(self):
-        obs = mlds.MLDSObject('test.csv', boot=False, save=False, standardscale=False) 
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=False, save=False, standardscale=False)
 
         obs.getRdatafilename()
-        assert(obs.Rdatafile == 'test_unnorm_probit.MLDS')
+        assert(obs.Rdatafile == abspath('test_unnorm_probit.MLDS'))
 
 
     def test_Rdatafilename3(self):
-        obs = mlds.MLDSObject('test.csv', boot=False, save=False, standardscale=False) 
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=False, save=False, standardscale=False)
         obs.linktype = 'cauchit'
         
         obs.getRdatafilename()
-        assert(obs.Rdatafile == 'test_unnorm_cauchit.MLDS')
+        assert(obs.Rdatafile == abspath('test_unnorm_cauchit.MLDS'))
 
 
     def test_Rdatafilename4(self):
-        obs = mlds.MLDSObject('test.csv', boot=False, save=False, standardscale=False) 
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=False, save=False, standardscale=False)
         
         obs.getRdatafilename(force_refit=True)
-        assert(obs.Rdatafile == 'test_unnorm_probit_refit.MLDS')
+        assert(obs.Rdatafile == abspath('test_unnorm_probit_refit.MLDS'))
         
         
 
     def test_readcsv(self):
-        obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=True)
-        obs.mldsfile='output_mldsfile.csv'
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=True, keepfiles=True)
+        obs.mldsfile = abspath('output_mldsfile.csv')
         obs.returncode=0
 
         obs.readresults()                                    
@@ -122,8 +125,8 @@ class TestMLDSClass(unittest.TestCase):
         self.compare(obs)
         
     def test_readobjectresults(self):
-        obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=False)
-        obs.Rdatafile = 'output_test.MLDS'
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=True, keepfiles=False)
+        obs.Rdatafile = abspath('output_test.MLDS')
         
         obs.readobjectresults()
         
@@ -131,7 +134,7 @@ class TestMLDSClass(unittest.TestCase):
 
     #@unittest.skip("skipping bootstrap diagnostics, saving time")
     def test_rundiags(self):
-        obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=False)
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=True, keepfiles=False)
         obs.parallel=False
         obs.nsamples = 250
         obs.run()
@@ -142,7 +145,7 @@ class TestMLDSClass(unittest.TestCase):
     
     #@unittest.skip("skipping bootstrap diagnostics, saving time")
     def test_rundiags_nosave(self, saveresiduals=False):
-        obs = mlds.MLDSObject('test.csv', boot=True, keepfiles=False)
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=True, keepfiles=False)
         obs.parallel=False
         obs.nsamples = 250
         obs.run()
@@ -153,8 +156,8 @@ class TestMLDSClass(unittest.TestCase):
        
        
     def test_readdiags(self):
-        obs = mlds.MLDSObject('test.csv', boot=False, keepfiles=False)
-        obs.Rdatafile = 'output_test.MLDS'
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=False, keepfiles=False)
+        obs.Rdatafile = abspath('output_test.MLDS')
         
         obs.readdiags()
         
@@ -162,7 +165,7 @@ class TestMLDSClass(unittest.TestCase):
         self.assertAlmostEqual(obs.DAF, daf, places=d)
         
     def test_simple_othernamecols(self):
-        obs = mlds.MLDSObject('test_cols.csv', boot=False, save=False) 
+        obs = mlds.MLDSObject(abspath('test_cols.csv'), boot=False, save=False)
         obs.colnames = {'stim' : ['stim1', 'stim2', 'stim3'], 
                         'response': 'resp'}
         obs.run()
@@ -171,7 +174,7 @@ class TestMLDSClass(unittest.TestCase):
 
 
     def test_simple_othernamecols2(self):
-        obs = mlds.MLDSObject('test_cols.csv', boot=False, save=False) 
+        obs = mlds.MLDSObject(abspath('test_cols.csv'), boot=False, save=False)
         obs.colnames = {'stim' : ['stim1', 'stim2', 'stim3'], 
                         'response': 'resp'}
         obs.load()
@@ -180,58 +183,58 @@ class TestMLDSClass(unittest.TestCase):
         
         
     def test_dimension_unit(self):
-        obs = mlds.MLDSObject('test.csv', boot=False, save=False, 
-                dimension_unit='stim') 
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=False, save=False,
+                              dimension_unit='stim')
         #obs.saveRcommands()
         obs.run()
         
         
     def test_dimension_unit_Rdatafilename(self):
-        obs = mlds.MLDSObject('test.csv', boot=False, save=False, 
-                dimension_unit='stim') 
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=False, save=False,
+                              dimension_unit='stim')
                 
         obs.getRdatafilename()
-        assert(obs.Rdatafile == 'test_stim_norm_probit.MLDS')
+        assert(obs.Rdatafile == abspath('test_stim_norm_probit.MLDS'))
         
         
         
 # #######################################################################
 # class TestMLDSComparison(unittest.TestCase):
-        
-
+#
+#
 #     def test_gam_run4(self):
-        
+#
 #         files = ['0.csv', '1.csv', '2.csv', '3.csv']
-#         gam = mlds_gam.MLDSGAMCompare(files)
+#         gam = mlds.MLDSGAMCompare(files)
 #         gam.run()
-        
+#
 #     def test_gam_run3(self):
-        
+#
 #         files = ['1.csv', '2.csv', '3.csv']
-#         gam = mlds_gam.MLDSGAMCompare(files)
+#         gam = mlds.MLDSGAMCompare(files)
 #         gam.run()
-        
+#
 #     def test_gam_run2(self):
-        
+#
 #         files = ['1.csv', '2.csv']
-#         gam = mlds_gam.MLDSGAMCompare(files)
+#         gam = mlds.MLDSGAMCompare(files)
 #         gam.run()
-        
+#
 #     def test_gam_run1(self):
-        
+#
 #         files = ['0.csv']
-#         gam = mlds_gam.MLDSGAMCompare(files, dividedby=2)
+#         gam = mlds.MLDSGAMCompare(files, dividedby=2)
 #         gam.run()
-        
+#
 #     def test_gam_dividedby(self):
-        
+#
 #         with self.assertRaises(Exception):
-#             mlds_gam.MLDSGAMCompare(['0.csv'])
-            
+#             mlds.MLDSGAMCompare(['0.csv'])
+#
 #     def test_gam_argument(self):
-        
+#
 #         with self.assertRaises(Exception):
-#             mlds_gam.MLDSGAMCompare('0.csv')
+#             mlds.MLDSGAMCompare('0.csv')
 
 
         

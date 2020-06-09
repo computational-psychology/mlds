@@ -7,16 +7,12 @@ data.csv was created by simulation.
 """
 
 import matplotlib.pyplot as plt
-
-# appends directory where mlds.py is, and imports
-import sys
-sys.path.append("../")
 import mlds
 
 
 ## creating MLDS object and running analysis
-obs = mlds.MLDSObject('data.csv', standardscale = False,
-                      boot=True, verbose=True)
+# (This may take a long time. Use data_small.csv if you just want to see the result format.)
+obs = mlds.MLDSObject('data.csv', standardscale = False, boot=True, verbose=True)
 
 print("Running analysis...")
 # obs.run() # always runs the analysis, overwrites the .MLDS file if exists.
@@ -43,13 +39,15 @@ obs.saveRcommands()
 ## Goodness of fit
 print("GoF measures:")
 print('AIC: %f, DAF: %f' % (obs.AIC, obs.DAF))
-# if you want to run deviance bootstrap analysis, uncomment the lines below
-# print("..deviance analysis ...")
-# obs.rundiagnostics()
-# print('p-val: %f' % obs.prob)
-# # plotting deviance
-# fig = obs.plotdiags()
-# fig.show()
+
+## Deviance analysis
+print("..deviance analysis ...")
+obs.rundiagnostics()
+print('p-val: %f' % obs.prob)
+# plotting deviance
+fig = obs.plotdiags()
+fig.show()
+
 
 #######################################################################
 ## important values that are accesible directly

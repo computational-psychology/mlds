@@ -93,7 +93,7 @@ class MLDSObject:
         self.linklam = 0.0
 
         self.filename = filename  # csv datafile containing observer responses
-        self.rootname = self.filename.split('.')[0]
+        self.rootname = os.path.basename(self.filename).split('.')[0]
         self.Rdatafile = None
         self.getRdatafilename()
 
@@ -176,7 +176,8 @@ class MLDSObject:
         if not (self.linkgam == 0.0 and self.linklam == 0.0) or force_refit:
             s.append('refit')
 
-        self.Rdatafile = "_".join(s) + '.MLDS'
+        fname = "_".join(s) + '.MLDS'
+        self.Rdatafile = os.path.join(os.path.dirname(self.filename), fname)
 
 
     ###################################################################################################
@@ -505,8 +506,7 @@ class MLDSObject:
         import pandas as pd
 
 
-        rootname = self.filename.split('.')[0]
-        fname = "%s_subset.csv" % rootname
+        fname = "%s_subset.csv" % self.rootname
 
         if write:
             orig = pd.read_csv( self.filename , sep=" ")

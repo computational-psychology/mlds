@@ -7,9 +7,6 @@ Created on Tue Nov 12 15:51:47 2013
 
 
 import numpy as np
-# appends directory where mlds.py is, and imports
-import sys
-sys.path.append("../")
 import mlds
 
 

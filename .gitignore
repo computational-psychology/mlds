@@ -1,2 +1,11 @@
 *.pyc
 .idea
+/dist/
+/build/
+/mlds.egg-info/
+/examples/*.csv
+/examples/*.MLDS
+/examples/*.R
+!/examples/data.csv
+!/examples/data_small.csv
+/mlds/test/test_cols_norm_probit.MLDS

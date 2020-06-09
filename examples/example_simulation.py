@@ -3,14 +3,9 @@
 Example of simulated observer performing MLDS
 
 """
-
 import matplotlib.pyplot as plt
 import numpy as np
-# appends directory where mlds.py is, and imports
-import sys
-sys.path.append("../")
 import mlds
-
 
 #######
 # 1. First, we set a stimulus dimension of interest
@@ -20,8 +15,8 @@ stim = np.linspace(0, 1, N)
 #######
 # 2. Then, we need to set a sensory function that maps the sensory dimension
 # with the perceived dimension. 
-# This repository includes some rudimentary functions
-from sensoryfunctions import PowerSensoryFunc
+# This package includes some rudimentary functions
+from mlds.sensoryfunctions import PowerSensoryFunc
 
 # sets a quadratic sensory function with exponent 2:  x^2 + epsilon, where x
 # is the stimulus dimension. epsilon is the gaussian-distributed noise
@@ -36,7 +31,8 @@ fn.sigmamin = 0.05
 
 ######
 # 3. Now we simulate the observer performing the method of triads.
-#    The simulated results are stored in the file fname
+# The simulated results are stored in the file fname
+# (Reduce nblocks to 1 if you just want to see the result format.)
 fname = mlds.simulateobserver(fn, stim, nblocks=15)
 
 
