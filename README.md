@@ -20,9 +20,10 @@ Requirements
 - R (>=3.0), with the *MLDS* and *psyphy* packages already installed.
 - Optional but recommended: *snow* package in R for multithreading.
 
-To install python modules, use the package manager of your sytem (in Debian, apt-get)
-R packages can be installed from CRAN or using the files provided in this repository (mlds/mlds/CRAN)
+Python module dependencies are installed automatically.
 
+R packages must be installed manually, either from CRAN (see below)
+or using the files provided in this repository (mlds/CRAN).
 
 
 Installation
@@ -30,12 +31,12 @@ Installation
 
 - Install R and the requirements within R: `install.packages(c("mlds", "psyphy", "snow"))` (*snow* is optional)
 
+##### For users
+- Simply run `pip install https://github.com/computational-psychology/mlds/tarball/master`
+
 ##### For developers
 - Clone the repository from github (`git clone https://github.com/computational-psychology/mlds.git`)
 - Go to the root of the repository and run `python setup.py install -f` (you can also run `pip install -e .`)
-
-##### For users
-- installing without having to clone the repo is coming soon
 
 
 Testing
@@ -47,13 +48,12 @@ mlds.test() # this should take around a minute
 ```
 
 
-
 Usage examples
 ==============
 
-- *example/example.py* gives usage example for MLDS analysis
-- *example/example_stim_generation.py* gives usage example for designing the triads or quadruples.
-- *example/example_simulation.py* gives usage example for simulating an observer performing the method of triads.
+- *examples/example.py* gives usage example for MLDS analysis
+- *examples/example_stim_generation.py* gives usage example for designing the triads or quadruples.
+- *examples/example_simulation.py* gives usage example for simulating an observer performing the method of triads.
 
 
 

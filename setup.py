@@ -20,7 +20,7 @@ setup(
     ],
     packages=find_packages(),
     package_data={'mlds.test': ['*.csv', '*.MLDS']},
-    install_requires=['scipy', 'numpy', 'matplotlib', 'rpy2', 'pytest'],
+    install_requires=['scipy', 'numpy', 'matplotlib', 'rpy2>=2.3.10', 'pytest'],
 
     name = 'mlds',
     description = 'Python wrapper for MLDS R package',
