@@ -19,7 +19,7 @@ from joblib import Parallel, delayed
 from scipy import optimize
 from scipy.interpolate import UnivariateSpline
 
-from utilsbootstrap import getCI_BCa, getCI_percentile
+from .utilsbootstrap import getCI_BCa, getCI_percentile
 
 
 def find_nearest(array, value):
