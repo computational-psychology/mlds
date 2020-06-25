@@ -29,7 +29,7 @@ or using the files provided in this repository (mlds/CRAN).
 Installation
 ============
 
-- Install R and the requirements within R: `install.packages(c("mlds", "psyphy", "snow"))` (*snow* is optional)
+- Install R and the requirements within R: `install.packages(c("MLDS", "psyphy", "snow"))` (*snow* is optional)
 
 ##### For users
 - Simply run `pip install https://github.com/computational-psychology/mlds/tarball/master`
