@@ -16,6 +16,7 @@ install:
   - pip3 install scipy
   - pip3 install rpy2
   - pip3 install pandas
+  - pip3 install joblib
 
 # command to run tests
 script: 
