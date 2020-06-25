@@ -15,6 +15,7 @@ install:
   - pip3 install numpy
   - pip3 install scipy
   - pip3 install rpy2
+  - pip3 install pandas
 
 # command to run tests
 script: 
