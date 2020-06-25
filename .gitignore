@@ -6,6 +6,7 @@
 /examples/*.csv
 /examples/*.MLDS
 /examples/*.R
+/examples/*.json
 !/examples/data.csv
 !/examples/data_small.csv
 /mlds/test/test_cols_norm_probit.MLDS

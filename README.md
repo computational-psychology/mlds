@@ -62,4 +62,4 @@ Contact
 Questions? Feedback? Don't hesitate to fork, pull request, or 
 contact me (guillermo.aguilar@mail.tu-berlin.de)
 
-This repository has so far only been tested in Linux (Debian Jessie and Stretch, Ubuntu Xenial, Ubuntu Bionic) 
+This repository has so far only been tested in Linux (Debian Jessie and Stretch, Ubuntu Xenial and Bionic) 

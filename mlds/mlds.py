@@ -190,7 +190,7 @@ class MLDSObject:
 
         seq = ["library(MLDS)\n",
                 "library(psyphy)\n",
-                "d.df <- read.table('%s', sep=' ', header=TRUE)\n" % self.filename,
+                "d.df <- read.table('%s', sep=',', header=TRUE)\n" % self.filename,
                 "stim <- sort(unique(c(d.df$%s, d.df$%s, d.df$%s)))\n" % (self.colnames['stim'][0], self.colnames['stim'][1], self.colnames['stim'][2]),
                 "results <- with(d.df, data.frame(resp = %s, S1= match(%s, stim), S2=match(%s, stim), S3=match(%s, stim)))\n" % (self.colnames['response'], self.colnames['stim'][0], self.colnames['stim'][1], self.colnames['stim'][2]),
                 "results <- as.mlbs.df(results, st=stim)\n"]
