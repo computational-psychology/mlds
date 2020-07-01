@@ -15,15 +15,15 @@ import mlds
 obs = mlds.MLDSObject('data.csv', standardscale = False, boot=True, verbose=True)
 
 print("Running analysis...")
-# obs.run() # always runs the analysis, overwrites the .MLDS file if exists.
+# obs.run()  # always runs the analysis, overwrites the .MLDS file if exists.
 obs.load()  # loads results from .MLDS file; runs the analysis if doesn't exist
 
 
 ## plotting
-print("plotting..")
+print("plotting...")
 plt.figure()
 plt.errorbar(obs.stim, obs.mns, yerr=abs(obs.ci95 - obs.mns), color='#4C72B0',
-             linewidth=2, elinewidth=2 )
+             linewidth=2, elinewidth=2)
 
 plt.xlabel('Stimulus')
 plt.ylabel('Difference Scale')

@@ -19,7 +19,10 @@ setup(
         'Programming Language :: Python :: 3',
     ],
     packages=find_packages(),
-    package_data={'mlds.test': ['*.csv', '*.MLDS']},
+    package_data={
+        'mlds': ['*.R'],
+        'mlds.test': ['*.csv', '*.MLDS'],
+    },
     install_requires=[
         'scipy',
         'numpy',
