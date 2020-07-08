@@ -54,6 +54,7 @@ Usage examples
 - *examples/example.py* gives usage example for MLDS analysis
 - *examples/example_stim_generation.py* gives usage example for designing the triads or quadruples.
 - *examples/example_simulation.py* gives usage example for simulating an observer performing the method of triads.
+- *examples/example_predict_thresholds.py* gives usage example for predicting discrimination thresholds from a perceptual scale, using signal detection theory assumptions. See Aguilar, Wichmann & Maertens (2017) for details.
 
 
 
@@ -63,3 +64,5 @@ Questions? Feedback? Don't hesitate to fork, pull request, or
 contact me (guillermo.aguilar@mail.tu-berlin.de)
 
 This repository has so far only been tested in Linux (Debian Jessie and Stretch, Ubuntu Xenial and Bionic) 
+
+
