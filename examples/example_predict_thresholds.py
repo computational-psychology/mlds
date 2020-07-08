@@ -17,7 +17,7 @@ sns.set_context('talk')
 sns.set_style("ticks", {'xtick.direction': 'in', 'ytick.direction': 'in',
                         "xtick.major.size": 2, "ytick.major.size": 2})
 
-name = 'data_small.csv'
+name = 'data.csv'
 
 # parameters for prediction form a scale
 dp = [-2, -1, -0.5, 0.5, 1, 2]  # d' around st to be predicted from scale
@@ -26,7 +26,7 @@ factor = 2.0  # factor correction
 citype = 'BCa'  # bias-corrected and accelerated CIs
 # citype='percentile'  # raw percentile CI
 
-nsamples = 10000  # number of bootstrap samples 
+nsamples = 1000  # number of bootstrap samples 
 res = 0.000015
 
 # standards

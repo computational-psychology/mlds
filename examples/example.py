@@ -13,6 +13,7 @@ import mlds
 ## creating MLDS object and running analysis
 # (This may take a long time. Use data_small.csv if you just want to see the result format.)
 obs = mlds.MLDSObject('data.csv', standardscale = False, boot=True, verbose=True)
+obs.nsamples = 1000
 
 print("Running analysis...")
 # obs.run()  # always runs the analysis, overwrites the .MLDS file if exists.
