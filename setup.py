@@ -39,6 +39,6 @@ setup(
     long_description=long_description,
     author='Guillermo Aguilar',
     license='GPL2',
-    version='0.4',
+    version='0.5',
     url='https://github.com/computational-psychology/mlds',
 )
