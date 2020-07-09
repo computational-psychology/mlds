@@ -149,6 +149,11 @@ def getdprimefromspline(xs, sp, st, d, sp_bt=None, citype="percentile", tol=0.1,
     else:
         ret = ret[0]
 
+    # if there's no value of threshold return, dont bother to do the same with the
+    # bootstrap samples, immediately return 
+    if np.isnan(ret):
+        return np.nan, np.nan, np.nan, np.nan
+    
     if sp_bt is not None:  # we get a spline with CI
         # variability estimation: bootstrap
         # get values for all bootstrap runs
