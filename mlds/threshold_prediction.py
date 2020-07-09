@@ -152,8 +152,12 @@ def getdprimefromspline(xs, sp, st, d, sp_bt=None, citype="percentile", tol=0.1,
     # if there's no value of threshold return, dont bother to do the same with the
     # bootstrap samples, immediately return 
     if np.isnan(ret):
-        return np.nan, np.nan, np.nan, np.nan
-    
+        retl, retu, retm = np.nan, np.nan, np.nan
+        retbt_r = np.array([np.nan])
+        sys.stdout.flush()  # flushing print output
+        return ret, retm, retl, retu, retbt_r
+  
+
     if sp_bt is not None:  # we get a spline with CI
         # variability estimation: bootstrap
         # get values for all bootstrap runs
@@ -185,25 +189,34 @@ def getdprimefromspline(xs, sp, st, d, sp_bt=None, citype="percentile", tol=0.1,
                 # else:
                 #    print "something is very wrong with your choice of d'"
 
-        # print "%d times two values were recovered" % n
-        retbt_r = np.copy(retbt)
+        # all values are nan, warning and returning nans
+        if np.all(np.isnan(retbt)):
+            print("WARNING: there are NaNs in all bootstrap samples, thresholds cannot be derived")
+            retl, retu, retm = np.nan, np.nan, np.nan
+            retbt_r =  np.array([np.nan])
+            
+            
+        else:
 
-        # checks if there are at least 100 different values in the histogram
-        if len(np.unique(retbt_r)) < 100:
-            print("WARNING: there are only %d different histogram values" % len(np.unique(retbt_r)))
-            print("for the bootstrap thresholds.. increase resolution of x dimension")
+            # print "%d times two values were recovered" % n
+            retbt_r = np.copy(retbt)
+    
+            # checks if there are at least 100 different values in the histogram
+            if len(np.unique(retbt_r)) < 100:
+                print("WARNING: there are only %d different histogram values" % len(np.unique(retbt_r)))
+                print("for the bootstrap thresholds.. increase resolution of x dimension")
+    
+                if warn:
+                    import matplotlib.pyplot as plt
+                    plt.hist(retbt, 100)
+                    plt.show()
 
-            if warn:
-                import matplotlib.pyplot as plt
-                plt.hist(retbt, 100)
-                plt.show()
-
-        ########################### CI
-        retm, retl, retu = calculateCI(ret, retbt, len(sp_bt), citype)
+            ########################### CI
+            retm, retl, retu = calculateCI(ret, retbt, len(sp_bt), citype)
 
     else:
         retl, retu, retm = np.nan, np.nan, np.nan
-        retbt_r = np.nan
+        retbt_r = np.array([np.nan])
 
     sys.stdout.flush()  # flushing print output
 
