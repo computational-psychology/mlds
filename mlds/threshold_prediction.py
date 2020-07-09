@@ -151,11 +151,11 @@ def getdprimefromspline(xs, sp, st, d, sp_bt=None, citype="percentile", tol=0.1,
 
     # if there's no value of threshold return, dont bother to do the same with the
     # bootstrap samples, immediately return 
-    if np.isnan(ret):
-        retl, retu, retm = np.nan, np.nan, np.nan
-        retbt_r = np.array([np.nan])
-        sys.stdout.flush()  # flushing print output
-        return ret, retm, retl, retu, retbt_r
+    #if np.isnan(ret):
+    #    retl, retu, retm = np.nan, np.nan, np.nan
+    #    retbt_r = np.array([np.nan])
+    #    sys.stdout.flush()  # flushing print output
+    #    return ret, retm, retl, retu, retbt_r
   
 
     if sp_bt is not None:  # we get a spline with CI
