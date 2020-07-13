@@ -55,7 +55,7 @@ dp = [-2, -1, -0.5, 0.5, 1, 2]  # d' around the  standard at which we will read 
 
 # type of confidence interval. 
 citype = 'BCa'  # bias-corrected and accelerated CIs
-# citype='percentile'  # raw percentile CI
+# citype = 'percentile'  # raw percentile CI
 
 # %% Estimating scale calling MLDS
 ml = mlds.MLDSObject(name, boot=True, standardscale=False, verbose=False)
@@ -83,7 +83,7 @@ print('estimating thresholds from scales')
 # mldsthrs is a pandas DataFrame, also saved as a CSV in the same folder
 mldsthrs, xs, ys, scaleGLM = mlds.predict_thresholds(ml, sts, dp, k=k, factor=factor,
                                                      citype=citype, tol=0.01, res=res,
-                                                     warn=True)
+                                                     warn=True, debug=False)
 
 plt.figure(figsize=(5, 5))
 plt.plot(ml.stim, ml.scale * factor, c='k')

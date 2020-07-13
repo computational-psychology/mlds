@@ -16,7 +16,6 @@ import sys
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from scipy import optimize
 from scipy.interpolate import UnivariateSpline
 
 from .utilsbootstrap import getCI_BCa, getCI_percentile
@@ -27,67 +26,11 @@ def find_nearest(array, value):
     return idx, array[idx]
 
 
-def findroots_spline(sp, offset=0):
-    """
-    Find the x values on which sp(x) = offset.
-    In other words, find the root(s) of a spline when moved vertically
-    an amount offset.
-
-    """
-
-    f = lambda x: sp(x) - offset
-
-    # find root via fsolve, starting at values 0 and 45 deg
-    r = [optimize.fsolve(f, 0, xtol=0.0001),
-         optimize.fsolve(f, 45, xtol=0.0001),
-         optimize.fsolve(f, 90, xtol=0.0001)]
-    r = np.array(r).round(2)
-    return np.unique(r)
-
-
-def findroots_spline_new(sp, offset=0):
-    """
-    Find the x values on which sp(x) = offset.
-    In other words, find the root(s) of a spline when moved vertically
-    an amount offset.
-
-    Find the roots numericaly by fsolve, only at the spline knots 
-    
-    """
-
-    f = lambda x: sp(x) - offset
-
-    # find root via fsolve, starting at the spline knots values
-    r = []
-    for k in sp.get_knots():
-        r.append(optimize.fsolve(f, k))
-    r = np.array(r)
-
-    return np.unique(r)
-
-
-def findroots_spline_zerocrossings(xs, ys, offset=0):
-    """
-    Find the x values on which sp(x) = offset.
-    In other words, find the root(s) of a spline when moved vertically
-    an amount offset. 
-    
-    Find the roots numericaly by calculating zero crossings
-
-    """
-    zero_crossings = np.where(np.diff(np.sign(ys - offset)))[0]
-    r = xs[zero_crossings]
-    r = r.round(2)
-    return np.unique(r)
-
-
-#####
 def getvalue(xs, sp, st, d, tol):
     """
-    Given a spline (sp) and its x-vector (xs), finds the value corresponding
-    to a d-prime difference (d) around the standard (st).
-    Returns nan if value cannot be found inside a certain tolerance (tol)
-
+    Given a *monotonically increasing* spline (sp) and its x-vector (xs),
+    finds the value corresponding to a d-prime difference (d) around the standard (st).
+    Returns nan if value cannot be found inside a certain tolerance (tol).
     """
 
     # Workflow:
@@ -102,111 +45,17 @@ def getvalue(xs, sp, st, d, tol):
     target = ys[iv] + d
 
     # 3. find value of x corresponding to that target
-
-    # profiling diff algorithms
-    # X = findroots_spline(sp, target)  # **1
-    X = findroots_spline_new(sp, target)  # **2 the fastest
-    # X = findroots_spline_zerocrossings(xs, sp(xs), target) # **3
-
-    X = X[X > 0]
-
-    # 4. check that interpolated value in spline is actually close to desired value,
-    # discard if findroots does find a value that does not correspond to original spline fit
-    if len(X) == 0:
-        ret = [np.nan]
+    iv, val = find_nearest(ys, target)
+    if abs(val - target) > tol:
+        return np.nan
     else:
-        ret = []
-        for i in range(len(X)):
-            xi, xv = find_nearest(xs, X[i])
-            err = abs(target - ys[xi])
-            ret.append(np.nan if err > tol else xv)
-
-    return ret
+        return xs[iv]
 
 
-def getdprimefromspline(xs, sp, st, d, sp_bt=None, citype="percentile", tol=0.1, warn=True):
-    """
-    Obtain stimulus value d-prime units (d) around a standard (st), from the
-    mean fitted data on a spline (sp), and c.i. around this mean from the
-    bootstrapped data (sp_bt).
-    C.I. are either 'percentile', or 'BCa' (bias corrected and accelerated)
-    
-    tol: estimation error tolerance in the scale dimension (y axis)
-
-    """
-
-    # get values for mean scale,
-    ret = getvalue(xs, sp, st, d, tol)
-
-    if len(ret) > 1:
-        ret = np.max(ret)
-        # if d > 0:
-        #    # takes the
-        #    ret = ret[np.argmax(np.array(ret))]
-        # elif d < 0 :
-        #    ret = ret[np.argmin(np.array(ret))]
-
-    else:
-        ret = ret[0]
-
-    if sp_bt is not None:  # we get a spline with CI
-        # variability estimation: bootstrap
-        # get values for all bootstrap runs
-        print("thresholds from bootstrap samples for st: %f, d'=%.1f" % (st, d))
-        retbt = np.zeros((len(sp_bt)))
-        n = 0
-
-        for i in range(len(sp_bt)):
-            val = np.array(getvalue(xs, sp_bt[i], st, d, tol))
-
-            val = val[np.logical_not(np.isnan(val))]
-
-            if len(val) == 0:
-                retbt[i] = np.nan
-            elif len(val) == 1:
-                retbt[i] = val[0]
-            elif len(val) > 1:
-                # takes the highest value
-                retbt[i] = val[np.argmax(np.array(val))]
-                n += 1
-                # print i
-                # print val
-
-                # retbt[i] = val[np.argmin(np.array(val))]
-                # if d > 0:
-                #    retbt[i] = val[np.argmax(np.array(val))]
-                # elif d < 0 :
-                #    retbt[i] = val[np.argmin(np.array(val))]
-                # else:
-                #    print "something is very wrong with your choice of d'"
-
-        # print "%d times two values were recovered" % n
-        retbt_r = np.copy(retbt)
-
-        # checks if there are at least 100 different values in the histogram
-        if len(np.unique(retbt_r)) < 100:
-            print("WARNING: there are only %d different histogram values" % len(np.unique(retbt_r)))
-            print("for the bootstrap thresholds.. increase resolution of x dimension")
-
-            if warn:
-                import matplotlib.pyplot as plt
-                plt.hist(retbt, 100)
-                plt.show()
-
-        ########################### CI
-        retm, retl, retu = calculateCI(ret, retbt, len(sp_bt), citype)
-
-    else:
-        retl, retu, retm = np.nan, np.nan, np.nan
-        retbt_r = np.nan
-
-    sys.stdout.flush()  # flushing print output
-
-    return ret, retm, retl, retu, retbt_r
-
-
-#########################
 def calculateCI(ret, retbt, Nsim, citype='percentile'):
+    """
+    TODO
+    """
     if (len(retbt) > Nsim * 0.1) & (ret is not np.nan):
 
         retbt = np.array(retbt)[~np.isnan(retbt)]
@@ -224,29 +73,73 @@ def calculateCI(ret, retbt, Nsim, citype='percentile'):
         retm = np.percentile(retbt, 50.0)  # median
 
     else:
-        retl, retu, retm = np.nan, np.nan, np.nan
+        retm, retl, retu = np.nan, np.nan, np.nan
 
     return retm, retl, retu
 
 
-def getinparallel(st, xs, sp, dp, sp_bt, citype, tol, warn, bootdata):
+def getdprimefromspline(xs, sp, st, d, sp_bt=None, citype="percentile", tol=0.1, warn=True):
+    """
+    Obtain stimulus value d-prime units (d) around a standard (st), from the
+    mean fitted data on a spline (sp), and c.i. around this mean from the
+    bootstrapped data (sp_bt).
+    C.I. are either 'percentile', or 'BCa' (bias corrected and accelerated)
+
+    tol: estimation error tolerance in the scale dimension (y axis)
+
+    """
+
+    # get values for mean scale
+    ret = getvalue(xs, sp, st, d, tol)
+
+    if sp_bt is not None:
+        # we get a spline with CI
+        # variability estimation: bootstrap
+        # get values for all bootstrap runs
+        print("thresholds from bootstrap samples for st: %f, d'=%.1f" % (st, d))
+        retbt = [getvalue(xs, s, st, d, tol) for s in sp_bt]
+
+        # checks if there are at least 100 different values in the histogram
+        if len(np.unique(retbt)) < 100:
+            print("WARNING: "
+                  "there are only %d different histogram values for the bootstrap thresholds... "
+                  "increase resolution of x dimension" % len(np.unique(retbt)))
+
+            if warn:
+                import matplotlib.pyplot as plt
+                plt.hist(retbt, 100)
+                plt.show()
+
+        # CI
+        retm, retl, retu = calculateCI(ret, retbt, len(sp_bt), citype)
+
+    else:
+        retl, retu, retm = np.nan, np.nan, np.nan
+        retbt = []
+
+    sys.stdout.flush()  # flushing print output
+
+    return ret, retm, retl, retu, retbt
+
+
+def getalldprime(st, xs, sp, dp, sp_bt=None, citype="percentile", tol=0.1, warn=True):
+    """
+    Calculates getdprimefromspline() for all d'-values given as dp, for a given standard st.
+    """
     data = {}
-    retbt = {}
+    ret_bt = {}
 
     for d in dp:
-        if bootdata:
-            tup = getdprimefromspline(xs, sp, st, d, sp_bt, citype, tol=tol, warn=warn)
-            data[d] = tup[0:4]
-            retbt[d] = list(tup[4])
-        else:
-            data[d] = getdprimefromspline(xs, sp, st, d, tol=tol, warn=warn)
+        ret, retm, retl, retu, retbt = getdprimefromspline(xs, sp, st, d, sp_bt, citype, tol, warn)
+        data[d] = (ret, retm, retl, retu)
+        ret_bt[d] = retbt
 
-    return data, retbt
+    return data, ret_bt
 
 
 ####################
 def predict_thresholds(obsGLM, sts, dp, k=3, factor=2, citype="percentile",
-                       tol=0.1, res=0.01, rangex=None, warn=True, save=True):
+                       tol=0.1, res=0.01, rangex=None, warn=True, save=True, debug=False):
     """
     Takes a MLDS Class object, and calculates a prediction for performance on
     a 2AFC task at different standards.
@@ -281,6 +174,7 @@ def predict_thresholds(obsGLM, sts, dp, k=3, factor=2, citype="percentile",
     rangex: list
     warn: bool
     save: bool
+    debug: bool
 
     
     
@@ -302,19 +196,20 @@ def predict_thresholds(obsGLM, sts, dp, k=3, factor=2, citype="percentile",
 
     """
 
+    df_columns = ['st', 'dprime', 'point_estimate', 'mean', 'CIl', 'CIh']
+
     if obsGLM.mns is not None:
         scaleGLM = obsGLM.mns * factor
-        # scaleGLM_ci= obsGLM.ci95*2
+        # scaleGLM_ci = obsGLM.ci95*2
         bootdata = True
     else:
         scaleGLM = obsGLM.scale * factor
         bootdata = False
 
     # k degree parameter, <=5
-    # s = 1
     sp = UnivariateSpline(obsGLM.stim, scaleGLM, k=k)
     # sp = interpolate.interp1d(obsGLM.stim, scaleGLM, kind=5)
-    # sp= np.poly1d( np.polyfit(obsGLM.stim, scaleGLM,5) )
+    # sp = np.poly1d( np.polyfit(obsGLM.stim, scaleGLM,5) )
 
     if rangex is None:
         xs = np.arange(obsGLM.stim[0], obsGLM.stim[-1], res)  # resolution of spline fit
@@ -324,9 +219,7 @@ def predict_thresholds(obsGLM, sts, dp, k=3, factor=2, citype="percentile",
     # evaluate spline with xs as a vector
     ys = sp(xs)
 
-    ##
     if bootdata:
-
         # if file exists, then it does not calculate once again
         fname_th = "%s_s2afc_%d_%s_%s.csv" % (obsGLM.Rdatafile.split(".")[0], k, factor, citype)
         fname_bt = "%s_retbt_%d_%s.json" % (obsGLM.Rdatafile.split(".")[0], k, factor)
@@ -339,35 +232,32 @@ def predict_thresholds(obsGLM, sts, dp, k=3, factor=2, citype="percentile",
             print("loading previously bootstrapped thresholds")
             print("and calculating CI")
             with open(fname_bt, 'r') as fp:
-                retbt = json.load(fp)
-            data = []
+                ret_bt = json.load(fp)
+            results = []
             for st in sts:
                 for d in dp:
                     ret = getvalue(xs, sp, st, d, tol)
-                    if len(ret) > 1:
-                        ret = np.max(ret)
-                    else:
-                        ret = ret[0]
-                    tup = calculateCI(ret, retbt[str(st)][str(d)], obsGLM.scalesbt.shape[1], citype)
-                    data.append([st, d, ret, tup[0], tup[1], tup[2]])
-            df = pd.DataFrame(data,
-                              columns=['st', 'dprime', 'point_estimate', 'mean', 'CIl', 'CIh'])
+                    retbt = ret_bt[str(st)][str(d)]
+                    nboot = obsGLM.scalesbt.shape[1]
+
+                    retm, retl, retu = calculateCI(ret, retbt, nboot, citype)
+                    results.append([st, d, ret, retm, retl, retu])
+            df = pd.DataFrame(results, columns=df_columns)
 
             if save:
                 df.to_csv(fname_th, index=False)
 
         else:
-            ### proceed to calculations
+            # proceed to calculations
             nboot = obsGLM.scalesbt.shape[1]
             scaleGLM_bt = obsGLM.scalesbt * factor
 
             sp_bt = [UnivariateSpline(obsGLM.stim, scaleGLM_bt[:, i], k=k) for i in range(nboot)]
-            ys_bt = np.zeros((len(xs), nboot))
-
-            for i in range(nboot):
-                ys_bt[:, i] = sp_bt[i](xs)
 
             ## slow performance here, commented cos it's just for visualization
+            # ys_bt = np.zeros((len(xs), nboot))
+            # for i in range(nboot):
+            #     ys_bt[:, i] = sp_bt[i](xs)
             # ys_l = np.percentile(ys_bt, 2.5, axis=1)
             # ys_h = np.percentile(ys_bt, 97.5, axis=1)
             # ys = np.vstack((ys, ys_l,  ys_h))
@@ -377,39 +267,38 @@ def predict_thresholds(obsGLM, sts, dp, k=3, factor=2, citype="percentile",
             # plt.plot(xs, ys[2,:],'g')
             # plt.show()
 
-            #### get prediction for all standards and d.primes
-            data = []
-            retbt = {}
+            # get prediction for all standards and d.primes
+            results = []
+            ret_bt = {}
 
-            ncpus = multiprocessing.cpu_count()
-            parallelizer = Parallel(n_jobs=ncpus)
-
-            tasks_iterator = (
-            delayed(getinparallel)(st, xs, sp, dp, sp_bt, citype, tol, warn, bootdata) for st in
-            sts)
-
-            result = parallelizer(tasks_iterator)
+            params = (xs, sp, dp, sp_bt, citype, tol, warn)
+            if debug:
+                results_per_st = [getalldprime(st, *params) for st in sts]
+            else:
+                tasks_iterator = (delayed(getalldprime)(st, *params) for st in sts)
+                parallelizer = Parallel(n_jobs=(multiprocessing.cpu_count()))
+                results_per_st = parallelizer(tasks_iterator)
 
             for i, st in enumerate(sts):
-                retbt[st] = result[i][1]
-                for dp, th in result[i][0].items():
-                    data.append([st, dp, th[0], th[1], th[2], th[3]])
+                data, retbt = results_per_st[i]
+                for dp, (ret, retm, retl, retu) in data.items():
+                    results.append([st, dp, ret, retm, retl, retu])
+                ret_bt[st] = retbt
 
-            df = pd.DataFrame(data,
-                              columns=['st', 'dprime', 'point_estimate', 'mean', 'CIl', 'CIh'])
+            df = pd.DataFrame(results, columns=df_columns)
 
             if save:
                 df.to_csv(fname_th, index=False)
                 with open(fname_bt, 'w') as fp:
-                    json.dump(retbt, fp)
+                    json.dump(ret_bt, fp)
 
     else:
-        data = []
+        results = []
         for st in sts:
             for d in dp:
-                data.append([st, d] + list(getdprimefromspline(xs, sp, st, d, tol=tol, warn=warn)))
-        df = pd.DataFrame(data,
-                          columns=['st', 'dprime', 'point_estimate', 'mean', 'CIl', 'CIh', 'bt_r'])
+                ret, retm, retl, retu, _ = getdprimefromspline(xs, sp, st, d, tol=tol, warn=warn)
+                results.append([st, d, ret, retm, retl, retu])
+        df = pd.DataFrame(results, columns=df_columns)
 
         print("variability not estimated: it needs bootstrapped data")
 
