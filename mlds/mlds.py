@@ -769,7 +769,7 @@ def simulateobserver(sensoryrep, stim, nblocks=1, decisionrule='diff',
     # where to save the results
     filename = str(uuid.uuid4()) + '.csv'
     rfl = open(filename, 'w')
-    writer = csv.writer(rfl, delimiter=' ')
+    writer = csv.writer(rfl, delimiter=',')
     writer.writerow(['Trial', 'Response', 's1', 's2', 's3', 'invord', 'i1', 'i2', 'i3'])
 
     # going through every trial
