@@ -46,7 +46,7 @@ nsamples = 1000  # number of bootstrap samples
 res = 0.000015  # interpolation resolution. decrease if needed.
 
 # Standards: at which stimulus levels you want to predict thresholds?
-sts = np.array([0.25, 0.5, 0.75]) 
+sts = np.array([0.25, 0.5, 0.75, 0.99])
 # d' : thresholds will be derived to the following d' performance 
 dp = [-2, -1, -0.5, 0.5, 1, 2]  # d' around the  standard at which we will read out thresholds
 # (negative values indicate comparisons below the standard, positive values for 
@@ -95,5 +95,7 @@ plt.ylabel('Perceptual scale')
 plt.plot(xs, ys, label='Interpolated scale')
 plt.title('Interpolated scale')
 plt.show()
+
+print(mldsthrs)
 
 # EOF

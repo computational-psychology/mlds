@@ -195,6 +195,27 @@ class TestMLDSClass(unittest.TestCase):
                 
         obs.getRdatafilename()
         assert(obs.Rdatafile == abspath('test_stim_norm_probit.MLDS'))
+
+
+    def test_threshold_prediction(self):
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=True, standardscale=False)
+        obs.nsamples = 1000
+        obs.load()
+
+        sts = np.array([0.25, 0.99])
+        dp = [-2, -0.5, 0.5, 2]
+
+        k = 3
+        factor = 2.0
+        res = 0.000015
+        citype = 'BCa'
+        mldsthrs, *_ = mlds.predict_thresholds(obs, sts, dp, k=k, factor=factor,
+                                                     citype=citype, tol=0.01, res=res,
+                                                     warn=True, debug=False, save=False)
+
+        expected = np.array([np.nan, 0.17, 0.32, 0.49, 0.91, 0.97, np.nan, np.nan])
+        actual = mldsthrs['point_estimate'].to_list()
+        np.testing.assert_almost_equal(expected, actual, decimal=d)
         
         
         

@@ -9,4 +9,4 @@
 /examples/*.json
 !/examples/data.csv
 !/examples/data_small.csv
-/mlds/test/test_cols_norm_probit.MLDS
+/mlds/test/*.MLDS
