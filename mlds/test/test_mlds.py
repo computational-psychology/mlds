@@ -200,6 +200,7 @@ class TestMLDSClass(unittest.TestCase):
     def test_threshold_prediction(self):
         obs = mlds.MLDSObject(abspath('test.csv'), boot=True, standardscale=False)
         obs.nsamples = 1000
+        obs.parallel = False
         obs.load()
 
         sts = np.array([0.25, 0.99])
