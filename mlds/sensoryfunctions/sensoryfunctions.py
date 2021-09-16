@@ -140,7 +140,14 @@ class Cue2DSensoryFunc:
     def __call__(self, x):
         """  returns a sample at stimulus intensity x  """
 
-        v = random.gauss(self.func(x), self.sigmafunc(x))
+        if isinstance(x, float) or isinstance(x, int):
+            v = random.gauss(self.func(x), self.sigmafunc(x))
+        else:
+            try:
+                v = [random.gauss(self.func(xx), self.sigmafunc(xx)) for xx in x]
+            except:
+                raise ValueError('provide either a float, an int, a list or a numpy vector')
+
         return v
 
 

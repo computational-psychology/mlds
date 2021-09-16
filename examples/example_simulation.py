@@ -38,9 +38,18 @@ fname = mlds.simulateobserver(fn, stim, nblocks=15)
 
 #######
 # 4. Finally, we want to estimate the scale from the simulated data.
-obs = mlds.MLDSObject(fname, boot=True, standardscale=False, verbose=True)
-obs.load()  # this takes a while as bootstrap is done
+obs = mlds.MLDSObject(fname, boot=True, standardscale=False, verbose=False)
+
+# number of samples for the calculation of bootstrap confidence intervals.
+# here only 100 just for demostration purposes and speed. Recommeded is 
+# at least 1000, we've used 10000 just to be sure (but that adds much more 
+# computation time)
+obs.nsamples = 100 
+
+# calling to run the analysis
+obs.run()  # this takes a while as bootstrap is done
 obs.printinfo()
+
 
 # we can plot the scale
 # the shape of the scale should coincide with a power function with exponent 2
@@ -53,11 +62,17 @@ plt.show()
 print("noise estimate from MLDS: %.3f" % (1 / obs.mns[-1]))
 print("which must be the double of the sensory noise %.3f" % fn.sigmamax)
 
-# finally, GoF measures should be OK, as we are simulating an observer
-# that actually performs the decision model assumed by MLDS
+
+# We can also check the goofness of fit of the model. As we have simulated
+# an observer that exactly behaves like MLDS assumes a observer decides, then
+# the goodness of fit tests should all be OK. 
 obs.rundiagnostics()
+
 print("GoF measures:")
-print('AIC: %f, DAF: %f' % (obs.AIC, obs.DAF))
-print('p-val: %f' % obs.prob)
+#print('AIC: %f, DAF: %f' % (obs.AIC, obs.DAF))
+print('p-val: %f' % obs.prob) 
+# p-value should be not signifficant, that is, we do not discard the MLDS model
+# as a model that can explain the data.
+
 
 # EOF
