@@ -155,8 +155,10 @@ class MLDSObject:
             print("   sigma: ", self.sigma)
 
         if self.status==2:
-            print("   ci 2.5%: "), self.ci95[0]
-            print("   ci 97.5%: "), self.ci95[1]
+            print("   ci 2.5%: ")
+            print(self.ci95[0])
+            print("   ci 97.5%: ")
+            print(self.ci95[1])
             if self.correctedCI:
                 print("corrected CIs")
 
