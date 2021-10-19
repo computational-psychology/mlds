@@ -6,12 +6,11 @@ python:
   - 3.8
   - 3.9
 
-dist: 
-  - hirsute
-  - groovy
-  - focal
-  - bionic
-  - xenial
+matrix:
+    include:
+        - dist: hirsute
+        - dist: groovy
+        - dist: focal
 
 
 before_install:
