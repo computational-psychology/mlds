@@ -1,4 +1,11 @@
 language: python
+
+python:
+  - 3.6
+  - 3.7
+  - 3.8
+  - 3.9
+
 dist: xenial
 
 before_install:
@@ -8,6 +15,7 @@ before_install:
   - sudo apt-get install -y r-base
   - sudo R CMD INSTALL mlds/CRAN/MLDS_0.4.5.tar.gz
   - sudo R CMD INSTALL mlds/CRAN/psyphy_0.2-2.tar.gz
+  - python --version
 
 
 # command to install dependencies

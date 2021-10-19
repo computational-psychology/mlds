@@ -104,8 +104,9 @@ def getdprimefromspline(xs, sp, st, d, sp_bt=None, citype="percentile", tol=0.1,
             print("WARNING: "
                   "there are only %d different histogram values for the bootstrap thresholds... "
                   "increase resolution of x dimension" % len(np.unique(retbt)))
-
-            if warn:
+            v = np.array(retbt)
+            v = v[~np.isnan(v)]
+            if warn and len(v)>0:
                 import matplotlib.pyplot as plt
                 plt.hist(retbt, 100)
                 plt.show()
@@ -118,7 +119,7 @@ def getdprimefromspline(xs, sp, st, d, sp_bt=None, citype="percentile", tol=0.1,
         retbt = []
 
     sys.stdout.flush()  # flushing print output
-
+     
     return ret, retm, retl, retu, retbt
 
 

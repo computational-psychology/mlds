@@ -208,14 +208,25 @@ class TestMLDSClass(unittest.TestCase):
 
         k = 3
         factor = 2.0
-        res = 0.000015
+        res = 0.000005
         citype = 'BCa'
         mldsthrs, *_ = mlds.predict_thresholds(obs, sts, dp, k=k, factor=factor,
                                                      citype=citype, tol=0.01, res=res,
-                                                     warn=True, debug=False, save=False)
+                                                     warn=False, debug=False, save=False)
 
+        # comparing point estimate
         expected = np.array([np.nan, 0.17, 0.32, 0.49, 0.91, 0.97, np.nan, np.nan])
         actual = mldsthrs['point_estimate'].to_list()
+        np.testing.assert_almost_equal(expected, actual, decimal=d)
+        
+        # comparing lower bound CI
+        expected = np.array([np.nan, 0.14, 0.31, 0.46, 0.90, 0.97, np.nan, np.nan])
+        actual = mldsthrs['CIl'].to_list()
+        np.testing.assert_almost_equal(expected, actual, decimal=d)
+        
+        # comparing upper bound CI
+        expected = np.array([np.nan, 0.18, 0.335, 0.52, 0.926, 0.9747, np.nan, np.nan])
+        actual = mldsthrs['CIh'].to_list()
         np.testing.assert_almost_equal(expected, actual, decimal=d)
         
         
