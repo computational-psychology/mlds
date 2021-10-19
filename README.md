@@ -9,6 +9,7 @@ It contains:
 - a python implementation that wraps the R package MLDS. This wrapper makes easier to analyse the data obtained in MLDS experiments. It also provides the extra functionality to using multi-thread, making the bootstrap calculation much faster.
 
 - utilities for designing MLDS experiments (method of triads and quadruples)
+
 - functions to simulate an observer performing an MLDS experiment (so far only for the method of triads).
 
 
@@ -35,7 +36,7 @@ Installation
 - Install R and the requirements within R: `install.packages(c("MLDS", "psyphy", "snow"))` (*snow* is optional)
 
 ##### For users
-- Simply run `pip install https://github.com/computational-psychology/mlds/tarball/master`
+- Simply run `pip install https://github.com/computational-psychology/mlds/tarball/master`. Missing python dependencies are installed automatically.
 
 ##### For developers
 - Clone the repository from github (`git clone https://github.com/computational-psychology/mlds.git`)
@@ -65,6 +66,7 @@ Contact
 =======
 Questions? Feedback? Don't hesitate to ask Guillermo Aguilar (guillermo.aguilar@mail.tu-berlin.de)
 
-This repository has so far only been tested in Linux (Debian 10 Buster, Ubuntu Xenial and Bionic) 
+This repository has so far only been tested in Linux (Debian 9, 10 and Ubuntu Xenial, Bionic, Focal). 
+Automatic testing using Travis test the package in Ubuntu Focal, for all major versions of python >=3.6.
 
 
