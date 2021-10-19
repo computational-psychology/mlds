@@ -6,11 +6,7 @@ python:
   - 3.8
   - 3.9
 
-matrix:
-    include:
-        - dist: hirsute
-        - dist: groovy
-        - dist: focal
+dist: focal
 
 
 before_install:
