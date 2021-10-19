@@ -1,18 +1,19 @@
 language: python
 
 python:
-  - 3.4
   - 3.5
   - 3.6
   - 3.7
   - 3.8
   - 3.9
 
-dist: xenial
+dist: focal
 
 before_install:
-  - sudo add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu xenial-cran35/"
-  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+  - sudo apt update -qq
+  - sudo apt install --no-install-recommends software-properties-common dirmngr
+  - wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | sudo tee -a /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc
+  - sudo add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
   - sudo apt-get update
   - sudo apt-get install -y r-base
   - sudo R CMD INSTALL mlds/CRAN/MLDS_0.4.5.tar.gz

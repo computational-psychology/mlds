@@ -15,9 +15,12 @@ It contains:
 Requirements
 ============
 
+- Python >= 3.6
+
 - Python modules: numpy, subprocess, multiprocessing and rpy2 (>=2.3.10)
 
 - R (>=3.0), with the *MLDS* and *psyphy* packages already installed.
+
 - Optional but recommended: *snow* package in R for multithreading.
 
 Python module dependencies are installed automatically.
