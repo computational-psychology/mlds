@@ -27,12 +27,12 @@ def tofloat(s):
 
 class MLDSObject:
     """
-    MLDS Object allows the quick analysis of perceptual scales from triad
-    experiments using the maximum-likelihood difference scaling method
+    MLDS Object allows the quick analysis of perceptual scales from triad or
+    quadruples experiments using the maximum-likelihood difference scaling method
     (Maloney & Yang, 2003).
 
     It runs the analysis on R, using the MLDS package.
-    It requires, therefore, a running R version with packages MLDS and psyphy installed.
+    It requires a running version of R with the packages MLDS and psyphy installed.
 
     Usage
     ----------
@@ -98,7 +98,7 @@ class MLDSObject:
         self.getRdatafilename()
 
         # default column names in the text file to be read
-        self.colnames = {'stim' : ['s1', 's2', 's3'],
+        self.colnames = {'stim' : ['s1', 's2', 's3', 's4'],
                          'response': 'Response'}
 
 
@@ -128,6 +128,7 @@ class MLDSObject:
 
         ##
         self.seq = []  # sequence of commands in R
+        self.seqdiag = [] # sequence of commands for gof diagnostics
         self.mldsfile = ''
         self.GLMobject = None
         self.returncode = -1
@@ -192,10 +193,23 @@ class MLDSObject:
 
         seq = ["library(MLDS)\n",
                 "library(psyphy)\n",
-                "d.df <- read.table('%s', sep=',', header=TRUE)\n" % self.filename,
+                "d.df <- read.table('%s', sep=',', header=TRUE)\n" % self.filename]
+        
+        # we automatically recognize if the file is triads or quadruples
+        seq.extend([
+                "if(any(names(d.df) == '%s')){\n" % self.colnames['stim'][3],
+                "stim <- sort(unique(c(d.df$%s, d.df$%s, d.df$%s, d.df$%s)))\n" 
+                % (self.colnames['stim'][0], self.colnames['stim'][1], self.colnames['stim'][2], self.colnames['stim'][3]),
+                "results <- with(d.df, data.frame(resp = Response, S1= match(%s, stim), S2=match(%s, stim), S3=match(%s, stim), S4=match(%s, stim)))\n"
+                % (self.colnames['stim'][0], self.colnames['stim'][1], self.colnames['stim'][2], self.colnames['stim'][3]), 
+                "results <- as.mlds.df(results, st=stim)\n",
+                "results <- SwapOrder(results)\n",
+                "} else{\n",
                 "stim <- sort(unique(c(d.df$%s, d.df$%s, d.df$%s)))\n" % (self.colnames['stim'][0], self.colnames['stim'][1], self.colnames['stim'][2]),
-                "results <- with(d.df, data.frame(resp = %s, S1= match(%s, stim), S2=match(%s, stim), S3=match(%s, stim)))\n" % (self.colnames['response'], self.colnames['stim'][0], self.colnames['stim'][1], self.colnames['stim'][2]),
-                "results <- as.mlbs.df(results, st=stim)\n"]
+                "results <- with(d.df, data.frame(resp = Response, S1= match(%s, stim), S2=match(%s, stim), S3=match(%s, stim)))\n"
+                % (self.colnames['stim'][0], self.colnames['stim'][1], self.colnames['stim'][2]),
+                "results <- as.mlbs.df(results, st=stim)\n",
+                "}\n"])
 
         # still to be debug is the fact that passing a link function with gamma = lambda = 0 gives different results as passing the link function as a word.
         if self.linkgam == 0.0 and self.linklam == 0:
@@ -284,6 +298,7 @@ class MLDSObject:
 
         if self.returncode==0:
             self.readresults()
+            self.readdiags()
         else:
             print(err)
             raise RuntimeError("Error in execution within R (see error output above)")
@@ -347,25 +362,25 @@ class MLDSObject:
 
             self.getRdatafilename()
 
-            seqdiag = ["library(MLDS)\n",
+            self.seqdiag = ["library(MLDS)\n",
             "load('%s')\n" % self.Rdatafile]
 
 
             if self.parallel:
-                seqdiag.extend(["library(snow)\n",
+                self.seqdiag.extend(["library(snow)\n",
                 "source(paste('%s', '/pbinom.diagnostics.R', sep=''))\n" % os.path.dirname(sys.modules[__name__].__file__),
                 "workers <- c(%s)\n" % ",".join(self.workers),
                 "master <- %s\n" % self.master,
                 "obs.diag.prob <- pbinom.diagnostics (obs.mlds, %d, workers=workers, master=master)\n" % self.nsamples])
 
             else:
-                seqdiag.extend(["obs.diag.prob <- binom.diagnostics (obs.mlds, %d)\n" % self.nsamples])
+                self.seqdiag.extend(["obs.diag.prob <- binom.diagnostics (obs.mlds, %d)\n" % self.nsamples])
 
 
             if not saveresiduals:
                 # I take 95% CI envelopes and necesary variables to plot GoF,
                 # and I get rid of all residuals data that is very heavy.
-                seqdiag.extend(["alpha <- 0.025\n",
+                self.seqdiag.extend(["alpha <- 0.025\n",
                                 "nsim <- dim(obs.diag.prob$resid)[1]\n",
                                 "n <- dim(obs.diag.prob$resid)[2]\n",
                                 "obs.diag.prob$lowc <- obs.diag.prob$resid[alpha * nsim, ]\n",
@@ -374,7 +389,7 @@ class MLDSObject:
                                 "obs.diag.prob$alpha <- alpha\n",
                                 "obs.diag.prob$nsim <- nsim\n",
                                 "obs.diag.prob$n <- n\n"])
-            seqdiag.append('save(results, obs.mlds, obs.bt, obs.mns, obs.low, obs.high, obs.sd, samples, obs.diag.prob, file="%s")\n' % self.Rdatafile)
+            self.seqdiag.append('save(results, obs.mlds, obs.bt, obs.mns, obs.low, obs.high, obs.sd, samples, obs.diag.prob, file="%s")\n' % self.Rdatafile)
 
 
 
@@ -383,7 +398,7 @@ class MLDSObject:
                 print("executing in R...")
 
             proc = subprocess.Popen(["R", "--no-save"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            for line in seqdiag:
+            for line in self.seqdiag:
                 proc.stdin.write(line.encode())
             (out, err) = proc.communicate()
 
@@ -605,11 +620,11 @@ class MLDSObject:
         if not os.path.isfile(self.Rdatafile):
             self.saveRobj = True
             if self.verbose:
-                print(".. running analysis..")
+                print("..running analysis..")
             self.run()
         else:
             if self.verbose:
-                print("reading results from MLDS file")
+                print("..reading results from previously run analysis...")
 
         # scale and bootstrap
         self.readobjectresults()
