@@ -16,7 +16,7 @@ It contains:
 Requirements
 ============
 
-- Python >= 3.6
+- Python >= 3.7
 
 - Python modules: numpy, subprocess, multiprocessing, rpy2 (>=2.3.10)
 
