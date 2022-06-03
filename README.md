@@ -18,11 +18,9 @@ Requirements
 
 - Python >= 3.6
 
-- Python modules: numpy, subprocess, multiprocessing and rpy2 (>=2.3.10)
+- Python modules: numpy, subprocess, multiprocessing, rpy2 (>=2.3.10)
 
-- R (>=3.0), with the *MLDS* and *psyphy* packages already installed.
-
-- Optional but recommended: *snow* package in R for multithreading.
+- R (>=3.0), with the *MLDS*, *psyphy* and *snow* packages
 
 Python module dependencies are installed automatically.
 
@@ -33,7 +31,7 @@ or using the files provided in this repository (mlds/CRAN).
 Installation
 ============
 
-- Install R and the requirements within R: `install.packages(c("MLDS", "psyphy", "snow"))` (*snow* is optional)
+- Install R and the requirements within R: `install.packages(c("MLDS", "psyphy", "snow"))`
 
 ##### For users
 - Simply run `pip install https://github.com/computational-psychology/mlds/tarball/master`. Missing python dependencies are installed automatically.
