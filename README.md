@@ -1,5 +1,8 @@
 Python wrapper for MLDS R package 
-[![Build Status](https://travis-ci.com/computational-psychology/mlds.svg?branch=master)](https://travis-ci.com/computational-psychology/mlds)
+---------------------------------------
+
+[![DOI](https://zenodo.org/badge/42587765.svg)](https://zenodo.org/doi/10.5281/zenodo.12658147)
+
 
 Contents
 ========
