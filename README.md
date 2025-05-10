@@ -1,13 +1,9 @@
-Python wrapper for MLDS R package 
----------------------------------------
+# Python wrapper for MLDS R package 
 
+[![Tests](https://github.com/computational-psychology/mlds/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/computational-psychology/mlds/actions/workflows/ci-tests.yml)
 [![DOI](https://zenodo.org/badge/42587765.svg)](https://zenodo.org/doi/10.5281/zenodo.12658147)
 
-
-Contents
-========
-
-It contains:
+This python package contains:
 
 - a python implementation that wraps the R package MLDS. This wrapper makes easier to analyse the data obtained in MLDS experiments. It also provides the extra functionality to using multi-thread, making the bootstrap calculation much faster.
 
@@ -16,14 +12,11 @@ It contains:
 - functions to simulate an observer performing an MLDS experiment (so far only for the method of triads).
 
 
-Requirements
-============
+## Requirements
 
-- Python >= 3.7
+- Python >= 3.8 with numpy, subprocess, multiprocessing, and rpy2
 
-- Python modules: numpy, subprocess, multiprocessing, rpy2 (>=2.3.10)
-
-- R (>=3.0), with the *MLDS*, *psyphy* and *snow* packages
+- R, with the *MLDS*, *psyphy* and *snow* packages
 
 Python module dependencies are installed automatically.
 
@@ -31,35 +24,77 @@ R packages must be installed manually, either from CRAN (see below)
 or using the files provided in this repository (mlds/CRAN).
 
 
-Installation
-============
+## Installation
 
-- Install R and the requirements within R: `install.packages(c("MLDS", "psyphy", "snow"))`
+- Install R
+ 
+- Install the required R packages. You can do it from inside R with
 
-##### For users
-- Simply run `pip install https://github.com/computational-psychology/mlds/tarball/master`. Missing python dependencies are installed automatically.
-
-##### For developers
-- Clone the repository from github (`git clone https://github.com/computational-psychology/mlds.git`)
-- Go to the root of the repository and run `python setup.py install -f` (you can also run `pip install -e .`)
-
-
-Testing
-=======
-In a Python console, run:
-```python
-import mlds
-mlds.test() # this should take around a minute
+```R
+install.packages(c("MLDS", "psyphy", "snow"))
 ```
 
+or from the command line with
 
-Usage examples
-==============
+```bash
+R -e 'install.packages(c("MLDS", "psyphy", "snow"))'
+```
 
-- *examples/example.py* gives usage example for MLDS analysis
-- *examples/example_stim_generation.py* gives usage example for designing the triads or quadruples.
-- *examples/example_simulation.py* gives usage example for simulating an observer performing the method of triads.
-- *examples/example_predict_thresholds.py* gives usage example for predicting discrimination thresholds from a perceptual scale, using signal detection theory assumptions. See Aguilar, Wichmann & Maertens (2017) for details.
+- Install the mlds wrapper (this package). In the console run
+
+`pip install https://github.com/computational-psychology/mlds/tarball/master`. 
+
+The python dependencies will be installed automatically.
+
+
+## Quick start
+
+Given a CSV file containing the data from a triads experiment, called 'data_triads.csv'
+the code
+
+```python
+import matplotlib.pyplot as plt
+import mlds
+
+obs = mlds.MLDSObject('data_triads.csv', standardscale=False, 
+                      boot=True, verbose=False)
+```
+
+creates an object `obs` that will talk to R, pass the data, do the fit and
+return the results to python. Until now the object is just initalized; 
+to run the actual analysis we do
+
+```python
+obs.run()  # the wrapper now sends the commands to R, and R runs the fitting. 
+```
+
+Now we can get the stimulus values and estimated scales with
+
+```python
+print(obs.stim)
+print(obs.scale)
+```
+
+and plot the perceptual scale with
+
+```python
+plt.figure()
+plt.errorbar(obs.stim, obs.scale)
+plt.xlabel('Stimulus')
+plt.ylabel('Difference Scale')
+plt.show()
+```
+
+A more detailed usage example can be found in *examples/example.py*.
+
+
+
+## Usage examples
+
+- *examples/example.py* gives usage example for data from a triads experiment.
+- *examples/example_stim_generation.py* gives usage example for designing the triads or quadruples given the stimulus intensities.
+- *examples/example_simulation.py* shows how to simulate an observer performing the method of triads.
+- *examples/example_predict_thresholds.py* shows how to predict discrimination thresholds from a perceptual scale, using signal detection theory assumptions. See Aguilar, Wichmann & Maertens (2017) for details.
 
 
 
@@ -67,7 +102,5 @@ Contact
 =======
 Questions? Feedback? Don't hesitate to ask Guillermo Aguilar (guillermo.aguilar@mail.tu-berlin.de)
 
-This repository has so far only been tested in Linux (Debian 9, 10 and Ubuntu Xenial, Bionic, Focal). 
-Automatic testing using Travis test the package in Ubuntu Focal, for all major versions of python >=3.6.
-
+This implementation has a testing suite that gets run on every release. Testing is done in python >=3.8 and Ubuntu.
 
