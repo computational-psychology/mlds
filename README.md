@@ -5,11 +5,13 @@
 
 This python package contains:
 
-- a python implementation that wraps the R package MLDS. This wrapper makes easier to analyse the data obtained in MLDS experiments. It also provides the extra functionality to using multi-thread, making the bootstrap calculation much faster.
+- a python implementation that wraps the R package MLDS. This wrapper makes easier to analyse the data obtained in MLDS experiments, without having to leave python. It also provides the extra functionality to using parallel processing, making the bootstrap calculation of confidence intervals much faster.
 
-- utilities for designing MLDS experiments (method of triads and quadruples)
+- function to predict discrimination thresholds from a scale, as published in [Aguilar, Wichmann & Maertens (2017)](https://jov.arvojournals.org/article.aspx?articleid=2433839).
 
 - functions to simulate an observer performing an MLDS experiment (so far only for the method of triads).
+
+- utilities for designing MLDS experiments (method of triads and quadruples)
 
 
 ## Requirements
@@ -42,18 +44,23 @@ R -e 'install.packages(c("MLDS", "psyphy", "snow"))'
 
 - Install the mlds wrapper (this package). In the console run
 
-`pip install https://github.com/computational-psychology/mlds/tarball/master`. 
+```bash
+pip install https://github.com/computational-psychology/mlds/tarball/master
+```
 
 The python dependencies will be installed automatically.
 
 
 ## Quick start
 
-Given a CSV file containing the data from a triads experiment, called 'data_triads.csv'
-the code
+Experimental data should be saved in a CSV file, an example file is provided here: [*data_triads.csv*](examples/data_triads.csv).
+The file needs to have at least the following columns (naming of the columns is important!): 
+- *s1*, *s2* and *s3*, containing the stimulus values for each of the stimulus presented in the triad
+- *Response*: coding the binary response of the observer (which pair was perceived more different? 1 for pair (*s2*, *s3*), 0 otherwise
+
+The code
 
 ```python
-import matplotlib.pyplot as plt
 import mlds
 
 obs = mlds.MLDSObject('data_triads.csv', standardscale=False, 
@@ -78,23 +85,26 @@ print(obs.scale)
 and plot the perceptual scale with
 
 ```python
+import matplotlib.pyplot as plt
+
 plt.figure()
-plt.errorbar(obs.stim, obs.scale)
+plt.plot(obs.stim, obs.scale)
 plt.xlabel('Stimulus')
 plt.ylabel('Difference Scale')
 plt.show()
 ```
 
-A more detailed usage example can be found in *examples/example.py*.
+A more detailed usage example can be found in [here](examples/example.py).
 
 
 
 ## Usage examples
 
-- *examples/example.py* gives usage example for data from a triads experiment.
-- *examples/example_stim_generation.py* gives usage example for designing the triads or quadruples given the stimulus intensities.
-- *examples/example_simulation.py* shows how to simulate an observer performing the method of triads.
-- *examples/example_predict_thresholds.py* shows how to predict discrimination thresholds from a perceptual scale, using signal detection theory assumptions. See Aguilar, Wichmann & Maertens (2017) for details.
+- [examples/example.py](examples/example.py) show how to analyse data for a triads experiment.
+- [examples/example_quadruples.py](examples/example_quadruples.py) show how to analyse data for a quadruples experiment.
+- [examples/example_stim_generation.py](examples/example_stim_generation.py) gives usage example for designing the triads or quadruples given the stimulus intensities.
+- [examples/example_simulation.py](examples/example_simulation.py) shows how to simulate an observer performing the method of triads.
+- [examples/example_predict_thresholds.py](examples/example_predict_thresholds.py) shows how to predict discrimination thresholds from a perceptual scale, using signal detection theory assumptions. See [Aguilar, Wichmann & Maertens (2017)](https://jov.arvojournals.org/article.aspx?articleid=2433839) for details.
 
 
 
