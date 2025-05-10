@@ -1,0 +1,88 @@
+# This workflow will install Python dependencies and run tests with a variety of Python versions
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+name: Running tests
+
+on:
+  push:
+  pull_request:
+  schedule:  # At 00:00 on day-of-month 1
+    - cron: '0 0 1 * *'
+
+jobs:
+  test:
+    name: ${{ matrix.os}} / py${{ matrix.python_version }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [Ubuntu]
+        python_version: ['3.8', '3.9', '3.10', '3.11', '3.13']
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v4
+        name: Install Python ${{ matrix.python_version }}
+        with:
+          python-version: ${{ matrix.python_version }}
+          architecture: x64
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - run: |
+          Rscript -e 'print("hello")'
+      
+      - name: Installing R packages
+        run: |
+          Rscript -e 'install.packages("MLDS")'
+          Rscript -e 'install.packages("psyphy")'
+
+      - name: Upgrade PIP and setuptools
+        run: |
+          python -m pip install --upgrade pip setuptools
+                                                                         
+      - name: Install rpy2      
+        run: |
+          pip install rpy2
+ 
+      - name: Set R_LIBRARY (POSIX)
+        run: |
+            echo "R_LIBRARY=export LD_LIBRARY_PATH=$(python -m rpy2.situation LD_LIBRARY_PATH):${LD_LIBRARY_PATH}" >> $GITHUB_ENV
+            
+      - name: Install mlds to be tested
+        run: |
+          ${{ env.R_LIBRARY }}
+          pip install .[tests]
+                 
+      - name: Run tests for python ${{ matrix.python_version }}
+        run: |
+          ${{ env.R_LIBRARY }}
+          pytest -vv
+
+  lint:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
+      with:
+        python-version: "3.13"
+    - name: flake8 Lint Errors
+      uses: py-actions/flake8@v2
+      with:
+        args: --count --select=E9,F63,F7,F82 --show-source --statistics
+        # stop the build if there are Python syntax errors or undefined names
+        #    E9: Runtime errors (syntax, indentation, io)
+        #    F63: Wrong use of operators and always-true assertion tests
+        #    F7: Wrong position of statements (break, continue, return, ...)
+        #    F82: Undefined (variable) name
+    - name: flake8 Lint Warnings
+      uses: py-actions/flake8@v2
+      with:
+        args: --count --exit-zero --statistics --show-source
+        # print warnings if other style errors are found.
+        #    see .flake8 config file for selected/ignored rules.
+        #    warnings can be found in the action logs
