@@ -1,4 +1,4 @@
-trial,resp,stim1,stim2,stim3,invord,i1,i2,i3
+trial,Response,stim1,stim2,stim3,invord,i1,i2,i3
 0,0,0.40,0.10,0.00,1,5,2,1
 1,0,0.90,0.50,0.00,1,10,6,1
 2,0,0.10,0.80,0.90,0,2,9,10
