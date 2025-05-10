@@ -56,25 +56,28 @@ class TestMLDSClass(unittest.TestCase):
         
         
     def test_simple(self):
-        obs = mlds.MLDSObject(abspath('test.csv'), boot=False, save=False)
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=False, save=True)
         obs.run()
         
         np.testing.assert_almost_equal(obs.scale, scale, decimal= d)
         
+        os.remove(obs.Rdatafile)
+        
     
-    @unittest.skip("skipping bootstrap, saving time")
     def test_bootstrap(self):
-        obs = mlds.MLDSObject(abspath('test.csv'), boot=True, save=False)
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=True, save=True)
         obs.parallel=False
         obs.nsamples = 1000
         obs.initcommands()
         obs.run()
         
         self.compare(obs)
+        
+        os.remove(obs.Rdatafile)
     
-    @unittest.skip("skipping bootstrap, saving time")
+
     def test_bootstrap_correctedCI(self):
-        obs = mlds.MLDSObject(abspath('test.csv'), boot=True, save=False)
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=True, save=True)
         obs.correctedCI=True
         obs.parallel=False
         obs.nsamples = 1000
@@ -83,6 +86,7 @@ class TestMLDSClass(unittest.TestCase):
         np.testing.assert_almost_equal(obs.ci95, ci95_corrected, decimal=d)
         np.testing.assert_almost_equal(obs.sigmaci95, sigmaci95_corrected, decimal=d)
         
+        os.remove(obs.Rdatafile)
         
     def test_Rdatafilename(self):
         obs = mlds.MLDSObject(abspath('test.csv'), boot=False, save=False)
@@ -132,7 +136,7 @@ class TestMLDSClass(unittest.TestCase):
         
         self.compare(obs)
 
-    @unittest.skip("skipping bootstrap diagnostics, saving time")
+
     def test_rundiags(self):
         obs = mlds.MLDSObject(abspath('test.csv'), boot=True, keepfiles=False)
         obs.parallel=False
@@ -143,7 +147,7 @@ class TestMLDSClass(unittest.TestCase):
         self.assertAlmostEqual(obs.prob, prob, places=1)
         os.remove(obs.Rdatafile)
     
-    @unittest.skip("skipping bootstrap diagnostics, saving time")
+    
     def test_rundiags_nosave(self, saveresiduals=False):
         obs = mlds.MLDSObject(abspath('test.csv'), boot=True, keepfiles=False)
         obs.parallel=False
@@ -165,28 +169,23 @@ class TestMLDSClass(unittest.TestCase):
         self.assertAlmostEqual(obs.DAF, daf, places=d)
         
     def test_simple_othernamecols(self):
-        obs = mlds.MLDSObject(abspath('test_cols.csv'), boot=False, save=False)
-        obs.colnames = {'stim' : ['stim1', 'stim2', 'stim3'], 
+        obs = mlds.MLDSObject(abspath('test_cols.csv'), boot=False, save=True)
+        obs.colnames = {'stim' : ['stim1', 'stim2', 'stim3', 'stim4'], 
                         'response': 'resp'}
         obs.run()
         
         np.testing.assert_almost_equal(obs.scale, scale, decimal= d)
-
-
-    def test_simple_othernamecols2(self):
-        obs = mlds.MLDSObject(abspath('test_cols.csv'), boot=False, save=False)
-        obs.colnames = {'stim' : ['stim1', 'stim2', 'stim3'], 
-                        'response': 'resp'}
-        obs.load()
         
-        np.testing.assert_almost_equal(obs.scale, scale, decimal= d)
-        
+        os.remove(obs.Rdatafile)
+       
         
     def test_dimension_unit(self):
-        obs = mlds.MLDSObject(abspath('test.csv'), boot=False, save=False,
+        obs = mlds.MLDSObject(abspath('test.csv'), boot=False, save=True,
                               dimension_unit='stim')
         #obs.saveRcommands()
         obs.run()
+        
+        os.remove(obs.Rdatafile)
         
         
     def test_dimension_unit_Rdatafilename(self):
@@ -196,7 +195,7 @@ class TestMLDSClass(unittest.TestCase):
         obs.getRdatafilename()
         assert(obs.Rdatafile == abspath('test_stim_norm_probit.MLDS'))
 
-    @unittest.skip("skipping threshold prediction")
+
     def test_threshold_prediction(self):
         obs = mlds.MLDSObject(abspath('test.csv'), boot=True, standardscale=False)
         obs.nsamples = 1000
@@ -228,6 +227,8 @@ class TestMLDSClass(unittest.TestCase):
         expected = np.array([np.nan, 0.18, 0.335, 0.52, 0.926, 0.9747, np.nan, np.nan])
         actual = mldsthrs['CIh'].to_list()
         np.testing.assert_almost_equal(expected, actual, decimal=d)
+        
+        os.remove(obs.Rdatafile)
         
         
         
