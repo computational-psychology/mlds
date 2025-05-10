@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mlds"
+version = "1.0.0"
+requires-python = ">=3.6"
+dependencies = [
+    "numpy",
+    "scipy",
+    "rpy2",
+    "joblib",
+    "pandas",
+    "matplotlib",
+]
+readme =  {file = "README.md", content-type = "text/markdown"}
+authors = [
+    {name = "Guillermo Aguilar"},
+]
+maintainers = [
+    {name ="Guillermo Aguilar", email = "guillermo.aguilar@mail.tu-berlin.de"},
+]
+description = "Python wrapper for MLDS R package"
+license = {text = "GPL v2"}
+keywords = ["psychometric", "psychophysics", "function", "statistics"]
+classifiers = [
+  # How mature is this project? Common values are
+  #   3 - Alpha
+  #   4 - Beta
+  #   5 - Production/Stable
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)"
+]
+
+[project.urls]
+repository = 'https://github.com/computational-psychology/mlds'
+
+[project.optional-dependencies]
+tests = ["pytest", "pytest-cov", "flake8"]
+docs = [
+    "sphinx",
+    "sphinx-gallery",
+    "sphinx_rtd_theme",
+    "matplotlib",
+    "jupyter-book==0.14",
+    "jupytext>=1.13.3",
+    "jupyterlab_myst",
+    "myst_nb",
+    "ipywidgets",
+    "sphinx-hoverxref",
+]
