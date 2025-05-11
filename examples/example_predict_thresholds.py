@@ -5,7 +5,7 @@ Runs MLDS using the mlds wrapper in python (which calls R in the background)
 and predicts the 2AFC thresholds at given standard values.
 Uses bootstrap samples from MLDS to also provide thresholds with bootstrap CIs
 
-It saves threhsold data in a JSON. 
+It saves threshold data in a JSON. 
 
 Check out the following references for more details.
 
@@ -25,7 +25,7 @@ sns.set_style("ticks", {'xtick.direction': 'in', 'ytick.direction': 'in',
                         "xtick.major.size": 2, "ytick.major.size": 2})
 
 # raw csv file of MLDS data
-name = 'data.csv'
+name = 'data_triads.csv'
 
 #### parameters for prediction from a perceptual scale
 
@@ -33,9 +33,9 @@ name = 'data.csv'
 k = 3  # spline degree, 3 for cubic spline
 
 # factor multiplication to  transform perceptual scale in units of d'
-# assuming an internal representation that is a gaussian random variable with
+# assuming an internal representation that is a Gaussian random variable with
 # variance sigma, the decision variable in the MLDS model will also be 
-# be a gaussian random variable with variance 4*sigma. MLDS estimates the overall 
+# be a Gaussian random variable with variance 4*sigma. MLDS estimates the overall 
 # variance \hat{sigma} of the decision variable, and the inverse is the 
 # the scale's height. Thus, to transform the height to units of the *internal*
 # representation, we multiply by 2. (more detailed derivation in Appendix of [1])
