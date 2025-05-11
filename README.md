@@ -45,7 +45,7 @@ R -e 'install.packages(c("MLDS", "psyphy", "snow"))'
 - Install the mlds wrapper (this package). In the console run
 
 ```bash
-pip install https://github.com/computational-psychology/mlds/tarball/master
+pip install https://github.com/computational-psychology/mlds/tarball/main
 ```
 
 The python dependencies will be installed automatically.
