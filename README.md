@@ -1,4 +1,4 @@
-# Python wrapper for MLDS R package 
+# Python wrapper for Maximum likelihood difference scaling (MLDS) R package
 
 [![Tests](https://github.com/computational-psychology/mlds/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/computational-psychology/mlds/actions/workflows/ci-tests.yml)
 [![DOI](https://zenodo.org/badge/42587765.svg)](https://zenodo.org/doi/10.5281/zenodo.12658147)
@@ -29,7 +29,7 @@ or using the files provided in this repository (mlds/CRAN).
 ## Installation
 
 - Install R
- 
+
 - Install the required R packages. You can do it from inside R with
 
 ```R
@@ -54,7 +54,7 @@ The python dependencies will be installed automatically.
 ## Quick start
 
 Experimental data should be saved in a CSV file, an example file is provided here: [*data_triads.csv*](examples/data_triads.csv).
-The file needs to have at least the following columns (naming of the columns is important!): 
+The file needs to have at least the following columns (naming of the columns is important!):
 - *s1*, *s2* and *s3*, containing the stimulus values for each of the stimulus presented in the triad
 - *Response*: coding the binary response of the observer (which pair was perceived more different? 1 for pair (*s2*, *s3*), 0 otherwise
 
@@ -63,16 +63,17 @@ The code
 ```python
 import mlds
 
-obs = mlds.MLDSObject('data_triads.csv', standardscale=False, 
-                      boot=True, verbose=False)
+obs = mlds.MLDSObject('data_triads.csv',
+                      standardscale=False, # standard scale normalizes range from 0 to 1
+                      boot=True) # to calculate confidence intervals via bootstrap
 ```
 
 creates an object `obs` that will talk to R, pass the data, do the fit and
-return the results to python. Until now the object is just initalized; 
+return the results to python. Until now the object is just initialized;
 to run the actual analysis we do
 
 ```python
-obs.run()  # the wrapper now sends the commands to R, and R runs the fitting. 
+obs.run()  # the wrapper now sends the commands to R, and R runs the fitting.
 ```
 
 Now we can get the stimulus values and estimated scales with
@@ -87,12 +88,18 @@ and plot the perceptual scale with
 ```python
 import matplotlib.pyplot as plt
 
-plt.figure()
-plt.plot(obs.stim, obs.scale)
-plt.xlabel('Stimulus')
-plt.ylabel('Difference Scale')
+fig, ax = plt.subplots(1, 1, figsize=(5, 4))
+ax.errorbar(obs.stim, obs.scale, yerr=abs(obs.ci95 - obs.mns), color='#4C72B0',
+             linewidth=2, elinewidth=2)
+ax.set_xlabel('Stimulus')
+ax.set_ylabel('Perceptual scale')
+ax.spines[['right', 'top']].set_visible(False)
+plt.tight_layout()
 plt.show()
 ```
+
+![example scale output](examples/example_triads.png)
+
 
 A more detailed usage example can be found in [here](examples/example.py).
 
