@@ -1,26 +1,26 @@
-# This CITATION.cff file was generated with cffinit.
-# Visit https://bit.ly/cffinit to generate yours today!
-
 cff-version: 1.2.0
-title: MLDS python package
-message: >-
-  If you use this software, please cite it using the
-  metadata from this file.
-type: software
+title: "MLDS python package"
+version: 1.1
+date-released: 2025-05-11
 authors:
   - given-names: Guillermo
     family-names: Aguilar
     email: guillermo.aguilar@mail.tu-berlin.de
     affiliation: Technische Universität Berlin
     orcid: 'https://orcid.org/0000-0003-0970-5720'
-repository-code: 'https://github.com/computational-psychology/mlds'
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+url: "https://github.com/computational-psychology/mlds"
+repository-code: "https://github.com/computational-psychology/mlds"
 abstract: >-
-  Python wrapper for the MLDS R package (Maximum Likelihood
-  Difference Scaling). It includes also utilities for
-  designing MLDS experiments and simulating observers
+  Python wrapper for the MLDS R package. Also includes utilities for 
+  simulating observers doing an MLDS experiment, and predicting 
+  discrimination thresholds from a scale.
 keywords:
   - psychophysics
   - visual
   - perception
   - scaling methods
-version: 1.0.0
+doi: 10.5281/zenodo.12658147
