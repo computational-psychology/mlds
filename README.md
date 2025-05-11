@@ -1,4 +1,4 @@
-# Python wrapper for MLDS R package
+# Python wrapper for Maximum likelihood difference scaling (MLDS) R package
 
 [![Tests](https://github.com/computational-psychology/mlds/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/computational-psychology/mlds/actions/workflows/ci-tests.yml)
 [![DOI](https://zenodo.org/badge/42587765.svg)](https://zenodo.org/doi/10.5281/zenodo.12658147)

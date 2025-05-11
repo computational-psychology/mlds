@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: "MLDS python package"
+title: "Maximum likelihood difference scaling (MLDS) python package"
 version: 1.0.1
 date-released: 2025-05-11
 authors:
@@ -20,7 +20,8 @@ abstract: >-
   discrimination thresholds from a scale.
 keywords:
   - psychophysics
-  - visual
+  - scaling
   - perception
-  - scaling methods
+  - psychometrics
+  - statistics
 doi: 10.5281/zenodo.12658147
