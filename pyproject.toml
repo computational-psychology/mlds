@@ -52,3 +52,6 @@ docs = [
     "ipywidgets",
     "sphinx-hoverxref",
 ]
+
+[tool.setuptools.package-data]
+mlds = ["pboot.mlds.R", "pbinom.diagnostics.R"]
