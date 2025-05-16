@@ -140,7 +140,7 @@ class TestMLDSClass(unittest.TestCase):
     def test_rundiags(self):
         obs = mlds.MLDSObject(abspath('test.csv'), boot=True, keepfiles=False)
         obs.parallel=False
-        obs.nsamples = 250
+        obs.nsamples = 1000
         obs.run()
         obs.rundiagnostics()
                 
@@ -151,7 +151,7 @@ class TestMLDSClass(unittest.TestCase):
     def test_rundiags_nosave(self, saveresiduals=False):
         obs = mlds.MLDSObject(abspath('test.csv'), boot=True, keepfiles=False)
         obs.parallel=False
-        obs.nsamples = 250
+        obs.nsamples = 1000
         obs.run()
         obs.rundiagnostics(saveresiduals=saveresiduals)
                 
